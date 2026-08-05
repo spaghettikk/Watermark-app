@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="th" class="dark">
 <head>
@@ -6,6 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Filmmy Watermark Editor</title>
   <script src="https://cdn.tailwindcss.com"></script>
+  <!-- JSZip & FileSaver สำหรับสร้างไฟล์ ZIP -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
   <script>
     tailwind.config = {
       darkMode: 'class',
@@ -17,7 +19,7 @@
 </head>
 <body class="bg-gray-100 dark:bg-gray-900 text-gray-800 dark:text-gray-100 font-sans min-h-screen pb-10 transition-colors">
 
-  <!-- Header พร้อมชื่อแอป และ Creator Credit -->
+  <!-- Header -->
   <header class="bg-blue-600 dark:bg-gray-800 text-white p-3 sticky top-0 z-50 shadow-md flex justify-between items-center gap-2">
     <div>
       <h1 class="text-sm font-bold leading-tight">Filmmy Watermark Editor</h1>
@@ -63,7 +65,7 @@
       <div class="relative w-full aspect-square bg-gray-200 dark:bg-gray-900 rounded overflow-hidden flex items-center justify-center">
         <canvas id="mainCanvas" class="max-w-full max-h-full border border-gray-300 dark:border-gray-700"></canvas>
       </div>
-      <p class="text-xs text-gray-500 dark:text-gray-400 mt-1 text-center">แตะเลือกลิสต์โลโก้ด้านล่างเพื่อลากจัดตำแหน่ง</p>
+      <p class="text-xs text-gray-500 dark:text-gray-400 mt-1 text-center">ใช้นิ้วลากเพื่อจัดตำแหน่งโลโก้หรือข้อความบนภาพได้เลย</p>
 
       <!-- Multi-Logo Controls -->
       <div class="mt-4 p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg space-y-3">
@@ -83,19 +85,29 @@
           <button onclick="removeActiveLogo()" class="text-[10px] bg-red-500 text-white px-2 py-0.5 rounded">ลบโลโก้นี้</button>
         </div>
 
-        <!-- Scale -->
+        <!-- Position Presets -->
+        <div>
+          <label class="text-xs font-medium text-gray-600 dark:text-gray-300">ย้ายตำแหน่งด่วน</label>
+          <div class="grid grid-cols-5 gap-1 mt-1">
+            <button onclick="setLogoPosPreset('tl')" class="p-1 text-[10px] bg-gray-200 dark:bg-gray-600 rounded">ซ้ายบน</button>
+            <button onclick="setLogoPosPreset('tr')" class="p-1 text-[10px] bg-gray-200 dark:bg-gray-600 rounded">ขวาบน</button>
+            <button onclick="setLogoPosPreset('center')" class="p-1 text-[10px] bg-gray-200 dark:bg-gray-600 rounded">กลาง</button>
+            <button onclick="setLogoPosPreset('bl')" class="p-1 text-[10px] bg-gray-200 dark:bg-gray-600 rounded">ซ้ายล่าง</button>
+            <button onclick="setLogoPosPreset('br')" class="p-1 text-[10px] bg-gray-200 dark:bg-gray-600 rounded">ขวาล่าง</button>
+          </div>
+        </div>
+
+        <!-- Scale & Opacity -->
         <div>
           <label class="text-xs font-medium text-gray-600 dark:text-gray-300">ขนาดโลโก้</label>
           <input type="range" id="logoScaleSlider" min="5" max="100" value="30" class="w-full">
         </div>
-
-        <!-- Opacity -->
         <div>
           <label class="text-xs font-medium text-gray-600 dark:text-gray-300">ความโปร่งแสง (<span id="opacityVal">100</span>%)</label>
           <input type="range" id="logoOpacitySlider" min="0" max="100" value="100" class="w-full">
         </div>
 
-        <!-- Frame Style -->
+        <!-- Frame & Effect -->
         <div>
           <label class="text-xs font-medium text-gray-600 dark:text-gray-300">ใส่กรอบโลโก้ (Shape / Frame)</label>
           <select id="logoFrameSelect" class="w-full mt-1 p-1.5 text-xs border rounded bg-white dark:bg-gray-700 dark:border-gray-600">
@@ -105,8 +117,6 @@
             <option value="white-border">กรอบขอบเส้นทึบสีขาว (White Border)</option>
           </select>
         </div>
-
-        <!-- Border / Shadow Effect -->
         <div>
           <label class="text-xs font-medium text-gray-600 dark:text-gray-300">เอฟเฟกต์เงา (Effect)</label>
           <select id="logoEffectSelect" class="w-full mt-1 p-1.5 text-xs border rounded bg-white dark:bg-gray-700 dark:border-gray-600">
@@ -118,15 +128,37 @@
         </div>
       </div>
 
+      <!-- Text / Price Overlay Controls -->
+      <div class="mt-4 p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg space-y-3">
+        <div class="flex justify-between items-center">
+          <span class="text-sm font-semibold">ข้อความ / ป้ายราคาบนภาพ</span>
+          <label class="inline-flex items-center cursor-pointer">
+            <input type="checkbox" id="textEnableToggle" class="sr-only peer">
+            <div class="w-9 h-5 bg-gray-300 peer-focus:outline-none rounded-full peer dark:bg-gray-600 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-blue-600"></div>
+          </label>
+        </div>
+
+        <div id="textControlsGroup" class="hidden space-y-2 pt-2 border-t dark:border-gray-600">
+          <input type="text" id="textInput" placeholder="พิมพ์ข้อความ เช่น ฿1,500 หรือ น้ำหนัก 1 บาท" class="w-full p-2 text-xs border rounded bg-white dark:bg-gray-700 dark:border-gray-600">
+          <div class="grid grid-cols-2 gap-2">
+            <div>
+              <label class="text-[10px] text-gray-500">ขนาดตัวอักษร</label>
+              <input type="range" id="textSizeSlider" min="10" max="100" value="30" class="w-full">
+            </div>
+            <div>
+              <label class="text-[10px] text-gray-500">สีข้อความ</label>
+              <input type="color" id="textColorPicker" value="#ffffff" class="w-full h-7 p-0 border rounded cursor-pointer">
+            </div>
+          </div>
+        </div>
+      </div>
+
       <!-- Image Controls -->
       <div class="mt-4 space-y-3 pt-3 border-t dark:border-gray-700">
-        <!-- Brightness -->
         <div>
           <label class="text-xs font-medium text-gray-600 dark:text-gray-300">ปรับความสว่างภาพหลัก</label>
           <input type="range" id="brightnessSlider" min="50" max="150" value="100" class="w-full">
         </div>
-
-        <!-- Crop Aspect Ratio -->
         <div>
           <label class="text-xs font-medium text-gray-600 dark:text-gray-300">อัตราส่วนภาพ (Crop)</label>
           <div class="grid grid-cols-4 gap-2 mt-1">
@@ -139,7 +171,7 @@
       </div>
     </section>
 
-    <!-- Section 3: Export Settings & File Size Preview -->
+    <!-- Section 3: Export Settings -->
     <section class="bg-white dark:bg-gray-800 p-4 rounded-xl shadow space-y-3 transition-colors">
       <h2 class="text-lg font-semibold">3. ส่งออกรูปภาพ</h2>
       <div>
@@ -150,7 +182,6 @@
         </select>
       </div>
 
-      <!-- JPEG Options -->
       <div id="jpegSettingsGroup" class="hidden space-y-3">
         <div>
           <label class="text-xs font-medium text-gray-600 dark:text-gray-300">ความละเอียดภาพ (Resolution)</label>
@@ -160,22 +191,25 @@
             <option value="0.5">ต่ำ (Low - 50% ขนาดต้นฉบับ)</option>
           </select>
         </div>
-
         <div>
           <label class="text-xs font-medium text-gray-600 dark:text-gray-300">คุณภาพไฟล์ JPEG (<span id="qualityVal">90</span>%)</label>
           <input type="range" id="jpegQuality" min="10" max="100" value="90" class="w-full">
         </div>
       </div>
 
-      <!-- Real-time File Size Preview -->
       <div class="p-3 bg-blue-50 dark:bg-blue-950/40 rounded-lg flex justify-between items-center text-xs">
-        <span class="font-medium text-blue-800 dark:text-blue-200">ประเมินขนาดไฟล์ส่งออก:</span>
+        <span class="font-medium text-blue-800 dark:text-blue-200">ประเมินขนาดไฟล์ต่อรูป:</span>
         <span id="fileSizeEst" class="font-bold text-blue-600 dark:text-blue-400">0 KB</span>
       </div>
 
-      <button id="downloadBtn" class="w-full py-3 bg-green-600 hover:bg-green-700 text-white font-bold rounded-lg shadow">
-        บันทึกภาพ
-      </button>
+      <div class="grid grid-cols-2 gap-2">
+        <button id="downloadBtn" class="py-3 bg-green-600 hover:bg-green-700 text-white font-bold rounded-lg shadow text-xs">
+          บันทึกรูปปัจจุบัน
+        </button>
+        <button id="downloadZipBtn" class="py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg shadow text-xs">
+          📦 โหลดทุกรูปเป็น ZIP
+        </button>
+      </div>
     </section>
 
   </main>
@@ -190,20 +224,30 @@
     let canvasLogos = [];
     let activeCanvasLogoIndex = -1;
 
+    // Text Overlay State
+    let textState = {
+      enabled: false,
+      text: '',
+      size: 30,
+      color: '#ffffff',
+      x: 50,
+      y: 90
+    };
+
     const canvas = document.getElementById('mainCanvas');
     const ctx = canvas.getContext('2d');
     let currentAspect = 'original';
     let brightness = 100;
     let isDragging = false;
+    let dragTarget = null; // 'logo' or 'text'
     let dragStart = { x: 0, y: 0 };
 
-    // --- Theme Control ---
-    const themeToggleBtn = document.getElementById('themeToggleBtn');
-    themeToggleBtn.addEventListener('click', () => {
+    // Theme Toggle
+    document.getElementById('themeToggleBtn').addEventListener('click', () => {
       document.documentElement.classList.toggle('dark');
     });
 
-    // --- LocalStorage Logo ---
+    // LocalStorage Logo
     function loadLogosFromStorage() {
       const saved = localStorage.getItem('app_saved_logos');
       if (saved) {
@@ -292,7 +336,7 @@
       renderLogoGallery();
     }
 
-    // --- Photo Upload ---
+    // Photo Upload
     document.getElementById('photoInput').addEventListener('change', (e) => {
       const files = Array.from(e.target.files);
       if (files.length > 30) {
@@ -338,7 +382,7 @@
       });
     }
 
-    // --- Multi-Logo Placement ---
+    // Multi-Logo Placement
     document.getElementById('addLogoToCanvasBtn').addEventListener('click', () => {
       if (selectedStorageLogoIndex === -1 || !loadedLogoImgs[selectedStorageLogoIndex]) {
         alert('กรุณาเลือกหรืออัปโหลดโลโก้เข้าคลังก่อน');
@@ -393,263 +437,4 @@
       document.getElementById('logoOpacitySlider').value = logo.opacity * 100;
       document.getElementById('opacityVal').innerText = Math.round(logo.opacity * 100);
       document.getElementById('logoFrameSelect').value = logo.frame || 'none';
-      document.getElementById('logoEffectSelect').value = logo.effect || 'none';
-    }
-
-    function removeActiveLogo() {
-      if (activeCanvasLogoIndex !== -1) {
-        canvasLogos.splice(activeCanvasLogoIndex, 1);
-        activeCanvasLogoIndex = canvasLogos.length > 0 ? canvasLogos.length - 1 : -1;
-        renderPlacedLogoList();
-        renderCanvas();
-      }
-    }
-
-    // --- Controls Listener ---
-    document.getElementById('logoScaleSlider').addEventListener('input', (e) => {
-      if (activeCanvasLogoIndex !== -1) {
-        canvasLogos[activeCanvasLogoIndex].scale = e.target.value / 100;
-        renderCanvas();
-      }
-    });
-
-    document.getElementById('logoOpacitySlider').addEventListener('input', (e) => {
-      if (activeCanvasLogoIndex !== -1) {
-        const val = e.target.value / 100;
-        canvasLogos[activeCanvasLogoIndex].opacity = val;
-        document.getElementById('opacityVal').innerText = e.target.value;
-        renderCanvas();
-      }
-    });
-
-    document.getElementById('logoFrameSelect').addEventListener('change', (e) => {
-      if (activeCanvasLogoIndex !== -1) {
-        canvasLogos[activeCanvasLogoIndex].frame = e.target.value;
-        renderCanvas();
-      }
-    });
-
-    document.getElementById('logoEffectSelect').addEventListener('change', (e) => {
-      if (activeCanvasLogoIndex !== -1) {
-        canvasLogos[activeCanvasLogoIndex].effect = e.target.value;
-        renderCanvas();
-      }
-    });
-
-    document.getElementById('brightnessSlider').addEventListener('input', (e) => {
-      brightness = e.target.value;
-      renderCanvas();
-    });
-
-    function setAspectRatio(ratio) {
-      currentAspect = ratio;
-      renderCanvas();
-    }
-
-    // --- Render Canvas & Logo Frame Shapes ---
-    function renderCanvas() {
-      if (uploadedPhotos.length === 0) return;
-      const baseImg = uploadedPhotos[currentPhotoIndex];
-
-      let targetW = baseImg.naturalWidth;
-      let targetH = baseImg.naturalHeight;
-
-      if (currentAspect !== 'original') {
-        if (targetW / targetH > currentAspect) {
-          targetW = targetH * currentAspect;
-        } else {
-          targetH = targetW / currentAspect;
-        }
-      }
-
-      canvas.width = targetW;
-      canvas.height = targetH;
-
-      ctx.filter = `brightness(${brightness}%)`;
-      const cropX = (baseImg.naturalWidth - targetW) / 2;
-      const cropY = (baseImg.naturalHeight - targetH) / 2;
-
-      ctx.drawImage(baseImg, cropX, cropY, targetW, targetH, 0, 0, targetW, targetH);
-      ctx.filter = 'none';
-
-      canvasLogos.forEach((item, idx) => {
-        const logoImg = loadedLogoImgs[item.imgIndex];
-        if (!logoImg) return;
-
-        const lWidth = targetW * item.scale;
-        const lHeight = (logoImg.naturalHeight / logoImg.naturalWidth) * lWidth;
-        const lx = (item.x / 100) * (targetW - lWidth);
-        const ly = (item.y / 100) * (targetH - lHeight);
-
-        ctx.save();
-        ctx.globalAlpha = item.opacity;
-
-        // Apply Shadow Effects
-        if (item.effect === 'shadow') {
-          ctx.shadowColor = 'rgba(0, 0, 0, 0.6)';
-          ctx.shadowBlur = 12;
-          ctx.shadowOffsetX = 4;
-          ctx.shadowOffsetY = 4;
-        } else if (item.effect === 'white-glow') {
-          ctx.shadowColor = 'white';
-          ctx.shadowBlur = 15;
-        } else if (item.effect === 'black-glow') {
-          ctx.shadowColor = 'black';
-          ctx.shadowBlur = 15;
-        }
-
-        // Apply Frame Shapes
-        if (item.frame === 'circle') {
-          ctx.beginPath();
-          const centerX = lx + lWidth / 2;
-          const centerY = ly + lHeight / 2;
-          const radius = Math.min(lWidth, lHeight) / 2;
-          ctx.arc(centerX, centerY, radius, 0, Math.PI * 2);
-          ctx.closePath();
-          ctx.clip();
-        } else if (item.frame === 'rounded') {
-          ctx.beginPath();
-          const r = Math.min(lWidth, lHeight) * 0.15;
-          ctx.moveTo(lx + r, ly);
-          ctx.arcTo(lx + lWidth, ly, lx + lWidth, ly + lHeight, r);
-          ctx.arcTo(lx + lWidth, ly + lHeight, lx, ly + lHeight, r);
-          ctx.arcTo(lx, ly + lHeight, lx, ly, r);
-          ctx.arcTo(lx, ly, lx + lWidth, ly, r);
-          ctx.closePath();
-          ctx.clip();
-        } else if (item.frame === 'white-border') {
-          ctx.fillStyle = '#ffffff';
-          const pad = Math.max(3, targetW * 0.005);
-          ctx.fillRect(lx - pad, ly - pad, lWidth + (pad * 2), lHeight + (pad * 2));
-        }
-
-        ctx.drawImage(logoImg, lx, ly, lWidth, lHeight);
-        ctx.restore();
-
-        if (idx === activeCanvasLogoIndex) {
-          ctx.strokeStyle = '#2563eb';
-          ctx.lineWidth = Math.max(2, targetW * 0.003);
-          ctx.strokeRect(lx, ly, lWidth, lHeight);
-        }
-      });
-
-      updateFileSizeEstimate();
-    }
-
-    // --- Touch Dragging ---
-    function getPointerPos(e) {
-      const rect = canvas.getBoundingClientRect();
-      const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-      const clientY = e.touches ? e.touches[0].clientY : e.clientY;
-      return {
-        x: (clientX - rect.left) / rect.width * 100,
-        y: (clientY - rect.top) / rect.height * 100
-      };
-    }
-
-    canvas.addEventListener('mousedown', startDrag);
-    canvas.addEventListener('touchstart', startDrag);
-    window.addEventListener('mousemove', drag);
-    window.addEventListener('touchmove', drag);
-    window.addEventListener('mouseup', endDrag);
-    window.addEventListener('touchend', endDrag);
-
-    function startDrag(e) {
-      if (activeCanvasLogoIndex === -1) return;
-      isDragging = true;
-      dragStart = getPointerPos(e);
-    }
-
-    function drag(e) {
-      if (!isDragging || activeCanvasLogoIndex === -1) return;
-      const currentPos = getPointerPos(e);
-      const dx = currentPos.x - dragStart.x;
-      const dy = currentPos.y - dragStart.y;
-
-      const item = canvasLogos[activeCanvasLogoIndex];
-      item.x = Math.max(0, Math.min(100, item.x + dx));
-      item.y = Math.max(0, Math.min(100, item.y + dy));
-
-      dragStart = currentPos;
-      renderCanvas();
-    }
-
-    function endDrag() { isDragging = false; }
-
-    // --- Export & Size ---
-    const exportFormatSelect = document.getElementById('exportFormat');
-    const jpegSettingsGroup = document.getElementById('jpegSettingsGroup');
-    const jpegQualityInput = document.getElementById('jpegQuality');
-    const jpegResolutionSelect = document.getElementById('jpegResolution');
-
-    exportFormatSelect.addEventListener('change', (e) => {
-      jpegSettingsGroup.classList.toggle('hidden', e.target.value !== 'image/jpeg');
-      renderCanvas();
-    });
-
-    jpegQualityInput.addEventListener('input', (e) => {
-      document.getElementById('qualityVal').innerText = e.target.value;
-      renderCanvas();
-    });
-
-    jpegResolutionSelect.addEventListener('change', () => { renderCanvas(); });
-
-    function getExportCanvas() {
-      const format = exportFormatSelect.value;
-      let finalCanvas = canvas;
-
-      if (format === 'image/jpeg') {
-        const scale = parseFloat(jpegResolutionSelect.value);
-        if (scale !== 1.0) {
-          const scaledCanvas = document.createElement('canvas');
-          scaledCanvas.width = canvas.width * scale;
-          scaledCanvas.height = canvas.height * scale;
-          const sCtx = scaledCanvas.getContext('2d');
-          sCtx.drawImage(canvas, 0, 0, scaledCanvas.width, scaledCanvas.height);
-          finalCanvas = scaledCanvas;
-        }
-      }
-      return finalCanvas;
-    }
-
-    function updateFileSizeEstimate() {
-      if (uploadedPhotos.length === 0) return;
-      const format = exportFormatSelect.value;
-      const quality = format === 'image/jpeg' ? jpegQualityInput.value / 100 : 1.0;
-      const targetCanvas = getExportCanvas();
-
-      const dataUrl = targetCanvas.toDataURL(format, quality);
-      const head = `data:${format};base64,`;
-      const sizeInBytes = Math.round((dataUrl.length - head.length) * 3 / 4);
-
-      let sizeStr = '';
-      if (sizeInBytes >= 1024 * 1024) {
-        sizeStr = (sizeInBytes / (1024 * 1024)).toFixed(2) + ' MB';
-      } else {
-        sizeStr = (sizeInBytes / 1024).toFixed(1) + ' KB';
-      }
-      document.getElementById('fileSizeEst').innerText = sizeStr;
-    }
-
-    document.getElementById('downloadBtn').addEventListener('click', () => {
-      if (uploadedPhotos.length === 0) {
-        alert('กรุณาอัปโหลดรูปภาพก่อนส่งออก');
-        return;
-      }
-      const format = exportFormatSelect.value;
-      const quality = format === 'image/jpeg' ? jpegQualityInput.value / 100 : 1.0;
-      const targetCanvas = getExportCanvas();
-
-      const dataUrl = targetCanvas.toDataURL(format, quality);
-      const link = document.createElement('a');
-      const ext = format === 'image/png' ? 'png' : 'jpg';
-      link.download = `edited_photo_${Date.now()}.${ext}`;
-      link.href = dataUrl;
-      link.click();
-    });
-
-    // Init
-    loadLogosFromStorage();
-  </script>
-</body>
-</html>
+      document
