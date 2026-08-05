@@ -5,13 +5,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Filmmy Watermark Editor</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <!-- JSZip & FileSaver สำหรับสร้างไฟล์ ZIP -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
   <script>
-    tailwind.config = {
-      darkMode: 'class',
-    }
+    tailwind.config = { darkMode: 'class' }
   </script>
   <style>
     canvas { touch-action: none; }
@@ -20,22 +17,15 @@
 <body class="bg-gray-100 dark:bg-gray-900 text-gray-800 dark:text-gray-100 font-sans min-h-screen pb-10 transition-colors">
 
   <!-- Header -->
-  <header class="bg-blue-600 dark:bg-gray-800 text-white p-3 sticky top-0 z-50 shadow-md flex justify-between items-center gap-2">
+  <header class="bg-blue-600 dark:bg-gray-800 text-white p-3 sticky top-0 z-50 shadow-md flex justify-between items-center">
     <div>
       <h1 class="text-sm font-bold leading-tight">Filmmy Watermark Editor</h1>
       <p class="text-[10px] text-blue-200 dark:text-gray-400 font-normal">By FilmmyE22NCB</p>
     </div>
     
-    <div class="flex items-center gap-2 flex-shrink-0">
-      <input type="file" id="photoInput" accept="image/*" multiple class="hidden">
-      <button onclick="document.getElementById('photoInput').click()" class="bg-blue-700 hover:bg-blue-800 dark:bg-gray-700 dark:hover:bg-gray-600 px-3 py-1.5 rounded-lg text-xs font-medium border border-blue-500 dark:border-gray-600 flex items-center gap-1">
-        📷 เลือกรูป (<span id="photoCount">0</span>/30)
-      </button>
-
-      <button id="themeToggleBtn" class="p-1.5 bg-blue-700 dark:bg-gray-700 rounded-lg text-xs font-medium hover:opacity-90">
-        🌙 / ☀️
-      </button>
-    </div>
+    <button id="themeToggleBtn" class="p-1.5 bg-blue-700 dark:bg-gray-700 rounded-lg text-xs font-medium hover:opacity-90">
+      🌙 / ☀️
+    </button>
   </header>
 
   <main class="max-w-md mx-auto p-4 space-y-6">
@@ -55,12 +45,20 @@
       <p class="text-[10px] text-gray-400 mt-1">* โลโก้จะถูกบันทึกไว้ในเครื่อง เปิดใช้งานครั้งหน้าไม่ต้องอัปโหลดใหม่</p>
     </section>
 
-    <!-- Section 2: Editor Canvas -->
+    <!-- Section 2: Photo Upload (เห็นชัดเจน) -->
+    <section class="bg-white dark:bg-gray-800 p-4 rounded-xl shadow transition-colors">
+      <h2 class="text-lg font-semibold mb-2">2. อัปโหลดรูปภาพ (สูงสุด 30 รูป)</h2>
+      <input type="file" id="photoInput" accept="image/*" multiple class="hidden">
+      <button onclick="document.getElementById('photoInput').click()" class="w-full py-4 bg-blue-50 dark:bg-gray-700/50 border-2 border-dashed border-blue-300 dark:border-gray-600 rounded-xl text-blue-600 dark:text-gray-200 font-medium hover:bg-blue-100 flex flex-col items-center justify-center gap-1">
+        <span class="text-xl">📷</span>
+        <span class="text-xs font-bold">กดตรงนี้เพื่อเลือกรูปภาพ (<span id="photoCount">0</span>/30)</span>
+      </button>
+      <div id="photoThumbnails" class="flex gap-2 overflow-x-auto mt-3 min-h-[52px]"></div>
+    </section>
+
+    <!-- Section 3: Editor Canvas -->
     <section class="bg-white dark:bg-gray-800 p-4 rounded-xl shadow relative transition-colors">
-      <h2 class="text-lg font-semibold mb-2">2. ปรับแต่งภาพและจัดวางโลโก้</h2>
-      
-      <!-- Photo Thumbnails List -->
-      <div id="photoThumbnails" class="flex gap-2 overflow-x-auto mb-3 min-h-[56px] py-1 border-b dark:border-gray-700"></div>
+      <h2 class="text-lg font-semibold mb-2">3. ปรับแต่งภาพและจัดวางโลโก้</h2>
 
       <div class="relative w-full aspect-square bg-gray-200 dark:bg-gray-900 rounded overflow-hidden flex items-center justify-center">
         <canvas id="mainCanvas" class="max-w-full max-h-full border border-gray-300 dark:border-gray-700"></canvas>
@@ -71,15 +69,15 @@
       <div class="mt-4 p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg space-y-3">
         <div class="flex justify-between items-center">
           <span class="text-sm font-semibold">โลโก้บนภาพ (<span id="placedLogoCount">0</span>)</span>
-          <button id="addLogoToCanvasBtn" class="text-xs bg-green-600 hover:bg-green-700 text-white px-2 py-1 rounded">
-            + วาง Logo เพิ่ม
+          <button id="addLogoToCanvasBtn" class="text-xs bg-green-600 hover:bg-green-700 text-white px-3 py-1.5 rounded-lg font-medium shadow">
+            + วาง Logo ที่เลือก
           </button>
         </div>
         <div id="placedLogoList" class="flex gap-2 overflow-x-auto py-1"></div>
       </div>
 
       <!-- Active Logo Controls -->
-      <div id="activeLogoControls" class="mt-3 space-y-3 p-3 border rounded border-gray-200 dark:border-gray-700">
+      <div id="activeLogoControls" class="mt-3 space-y-3 p-3 border rounded-xl border-gray-200 dark:border-gray-700">
         <div class="flex justify-between items-center">
           <span class="text-xs font-bold text-blue-600 dark:text-blue-400">ปรับแต่งโลโก้ที่เลือก</span>
           <button onclick="removeActiveLogo()" class="text-[10px] bg-red-500 text-white px-2 py-0.5 rounded">ลบโลโก้นี้</button>
@@ -128,7 +126,7 @@
         </div>
       </div>
 
-      <!-- Text / Price Overlay Controls -->
+      <!-- Text Overlay -->
       <div class="mt-4 p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg space-y-3">
         <div class="flex justify-between items-center">
           <span class="text-sm font-semibold">ข้อความ / ป้ายราคาบนภาพ</span>
@@ -171,9 +169,9 @@
       </div>
     </section>
 
-    <!-- Section 3: Export Settings -->
+    <!-- Section 4: Export Settings -->
     <section class="bg-white dark:bg-gray-800 p-4 rounded-xl shadow space-y-3 transition-colors">
-      <h2 class="text-lg font-semibold">3. ส่งออกรูปภาพ</h2>
+      <h2 class="text-lg font-semibold">4. ส่งออกรูปภาพ</h2>
       <div>
         <label class="text-xs font-medium text-gray-600 dark:text-gray-300">ฟอร์แมตไฟล์</label>
         <select id="exportFormat" class="w-full mt-1 p-2 border rounded bg-white dark:bg-gray-700 dark:border-gray-600">
@@ -224,7 +222,6 @@
     let canvasLogos = [];
     let activeCanvasLogoIndex = -1;
 
-    // Text Overlay State
     let textState = {
       enabled: false,
       text: '',
@@ -239,15 +236,12 @@
     let currentAspect = 'original';
     let brightness = 100;
     let isDragging = false;
-    let dragTarget = null; // 'logo' or 'text'
     let dragStart = { x: 0, y: 0 };
 
-    // Theme Toggle
     document.getElementById('themeToggleBtn').addEventListener('click', () => {
       document.documentElement.classList.toggle('dark');
     });
 
-    // LocalStorage Logo
     function loadLogosFromStorage() {
       const saved = localStorage.getItem('app_saved_logos');
       if (saved) {
@@ -336,7 +330,6 @@
       renderLogoGallery();
     }
 
-    // Photo Upload
     document.getElementById('photoInput').addEventListener('change', (e) => {
       const files = Array.from(e.target.files);
       if (files.length > 30) {
@@ -382,7 +375,6 @@
       });
     }
 
-    // Multi-Logo Placement
     document.getElementById('addLogoToCanvasBtn').addEventListener('click', () => {
       if (selectedStorageLogoIndex === -1 || !loadedLogoImgs[selectedStorageLogoIndex]) {
         alert('กรุณาเลือกหรืออัปโหลดโลโก้เข้าคลังก่อน');
@@ -437,4 +429,4 @@
       document.getElementById('logoOpacitySlider').value = logo.opacity * 100;
       document.getElementById('opacityVal').innerText = Math.round(logo.opacity * 100);
       document.getElementById('logoFrameSelect').value = logo.frame || 'none';
-      document
+      documen
