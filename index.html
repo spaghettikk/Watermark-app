@@ -45,7 +45,7 @@
       <p class="text-[10px] text-gray-400 mt-1">* โลโก้จะถูกบันทึกไว้ในเครื่อง เปิดใช้งานครั้งหน้าไม่ต้องอัปโหลดใหม่</p>
     </section>
 
-    <!-- Section 2: Photo Upload (เห็นชัดเจน) -->
+    <!-- Section 2: Photo Upload -->
     <section class="bg-white dark:bg-gray-800 p-4 rounded-xl shadow transition-colors">
       <h2 class="text-lg font-semibold mb-2">2. อัปโหลดรูปภาพ (สูงสุด 30 รูป)</h2>
       <input type="file" id="photoInput" accept="image/*" multiple class="hidden">
@@ -176,22 +176,22 @@
         <label class="text-xs font-medium text-gray-600 dark:text-gray-300">ฟอร์แมตไฟล์</label>
         <select id="exportFormat" class="w-full mt-1 p-2 border rounded bg-white dark:bg-gray-700 dark:border-gray-600">
           <option value="image/png">PNG (โปร่งใส / คุณภาพสูงสุด)</option>
-          <option value="image/jpeg">JPEG (ปรับขนาดและความละเอียดได้)</option>
+          <option value="image/jpeg" selected>JPEG (ปรับขนาดและความละเอียดได้)</option>
         </select>
       </div>
 
-      <div id="jpegSettingsGroup" class="hidden space-y-3">
+      <div id="jpegSettingsGroup" class="space-y-3">
         <div>
           <label class="text-xs font-medium text-gray-600 dark:text-gray-300">ความละเอียดภาพ (Resolution)</label>
           <select id="jpegResolution" class="w-full mt-1 p-2 border rounded bg-white dark:bg-gray-700 dark:border-gray-600">
-            <option value="1.0">สูง (High - 100% ขนาดต้นฉบับ)</option>
+            <option value="1.0" selected>สูง (High - 100% ขนาดต้นฉบับ)</option>
             <option value="0.7">กลาง (Medium - 70% ขนาดต้นฉบับ)</option>
             <option value="0.5">ต่ำ (Low - 50% ขนาดต้นฉบับ)</option>
           </select>
         </div>
         <div>
-          <label class="text-xs font-medium text-gray-600 dark:text-gray-300">คุณภาพไฟล์ JPEG (<span id="qualityVal">90</span>%)</label>
-          <input type="range" id="jpegQuality" min="10" max="100" value="90" class="w-full">
+          <label class="text-xs font-medium text-gray-600 dark:text-gray-300">คุณภาพไฟล์ JPEG (<span id="qualityVal">100</span>%)</label>
+          <input type="range" id="jpegQuality" min="10" max="100" value="100" class="w-full">
         </div>
       </div>
 
@@ -330,32 +330,38 @@
       renderLogoGallery();
     }
 
+    // ระบบอัปโหลดคงความละเอียดภาพต้นฉบับ 100%
     document.getElementById('photoInput').addEventListener('change', (e) => {
       const files = Array.from(e.target.files);
+      if (files.length === 0) return;
       if (files.length > 30) {
         alert('เลือกรูปภาพได้ไม่เกิน 30 รูป');
         return;
       }
+
       uploadedPhotos = [];
       document.getElementById('photoCount').innerText = files.length;
       
       let loadedCount = 0;
       files.forEach((file, index) => {
-        const reader = new FileReader();
-        reader.onload = (event) => {
-          const img = new Image();
-          img.onload = () => {
-            uploadedPhotos[index] = img;
-            loadedCount++;
-            if (loadedCount === files.length) {
-              currentPhotoIndex = 0;
-              renderPhotoThumbnails();
-              renderCanvas();
-            }
-          };
-          img.src = event.target.result;
+        const img = new Image();
+        const objectUrl = URL.createObjectURL(file);
+        
+        img.onload = () => {
+          uploadedPhotos[index] = img;
+          loadedCount++;
+          if (loadedCount === files.length) {
+            currentPhotoIndex = 0;
+            renderPhotoThumbnails();
+            renderCanvas();
+          }
         };
-        reader.readAsDataURL(file);
+
+        img.onerror = () => {
+          alert(`เกิดข้อผิดพลาดในการโหลดรูปภาพที่ ${index + 1}`);
+        };
+
+        img.src = objectUrl;
       });
     });
 
@@ -363,6 +369,7 @@
       const container = document.getElementById('photoThumbnails');
       container.innerHTML = '';
       uploadedPhotos.forEach((photo, idx) => {
+        if (!photo) return;
         const thumb = document.createElement('img');
         thumb.src = photo.src;
         thumb.className = `h-12 w-12 object-cover rounded cursor-pointer border-2 flex-shrink-0 ${idx === currentPhotoIndex ? 'border-blue-600' : 'border-transparent'}`;
@@ -429,4 +436,350 @@
       document.getElementById('logoOpacitySlider').value = logo.opacity * 100;
       document.getElementById('opacityVal').innerText = Math.round(logo.opacity * 100);
       document.getElementById('logoFrameSelect').value = logo.frame || 'none';
-      documen
+      document.getElementById('logoEffectSelect').value = logo.effect || 'none';
+    }
+
+    function removeActiveLogo() {
+      if (activeCanvasLogoIndex !== -1) {
+        canvasLogos.splice(activeCanvasLogoIndex, 1);
+        activeCanvasLogoIndex = canvasLogos.length > 0 ? canvasLogos.length - 1 : -1;
+        renderPlacedLogoList();
+        renderCanvas();
+      }
+    }
+
+    function setLogoPosPreset(preset) {
+      if (activeCanvasLogoIndex === -1) return;
+      const logo = canvasLogos[activeCanvasLogoIndex];
+      if (preset === 'tl') { logo.x = 2; logo.y = 2; }
+      else if (preset === 'tr') { logo.x = 98; logo.y = 2; }
+      else if (preset === 'bl') { logo.x = 2; logo.y = 98; }
+      else if (preset === 'br') { logo.x = 98; logo.y = 98; }
+      else if (preset === 'center') { logo.x = 50; logo.y = 50; }
+      renderCanvas();
+    }
+
+    const textEnableToggle = document.getElementById('textEnableToggle');
+    const textControlsGroup = document.getElementById('textControlsGroup');
+    const textInput = document.getElementById('textInput');
+    const textSizeSlider = document.getElementById('textSizeSlider');
+    const textColorPicker = document.getElementById('textColorPicker');
+
+    textEnableToggle.addEventListener('change', (e) => {
+      textState.enabled = e.target.checked;
+      textControlsGroup.classList.toggle('hidden', !textState.enabled);
+      renderCanvas();
+    });
+
+    textInput.addEventListener('input', (e) => {
+      textState.text = e.target.value;
+      renderCanvas();
+    });
+
+    textSizeSlider.addEventListener('input', (e) => {
+      textState.size = parseInt(e.target.value);
+      renderCanvas();
+    });
+
+    textColorPicker.addEventListener('input', (e) => {
+      textState.color = e.target.value;
+      renderCanvas();
+    });
+
+    document.getElementById('logoScaleSlider').addEventListener('input', (e) => {
+      if (activeCanvasLogoIndex !== -1) {
+        canvasLogos[activeCanvasLogoIndex].scale = e.target.value / 100;
+        renderCanvas();
+      }
+    });
+
+    document.getElementById('logoOpacitySlider').addEventListener('input', (e) => {
+      if (activeCanvasLogoIndex !== -1) {
+        const val = e.target.value / 100;
+        canvasLogos[activeCanvasLogoIndex].opacity = val;
+        document.getElementById('opacityVal').innerText = e.target.value;
+        renderCanvas();
+      }
+    });
+
+    document.getElementById('logoFrameSelect').addEventListener('change', (e) => {
+      if (activeCanvasLogoIndex !== -1) {
+        canvasLogos[activeCanvasLogoIndex].frame = e.target.value;
+        renderCanvas();
+      }
+    });
+
+    document.getElementById('logoEffectSelect').addEventListener('change', (e) => {
+      if (activeCanvasLogoIndex !== -1) {
+        canvasLogos[activeCanvasLogoIndex].effect = e.target.value;
+        renderCanvas();
+      }
+    });
+
+    document.getElementById('brightnessSlider').addEventListener('input', (e) => {
+      brightness = e.target.value;
+      renderCanvas();
+    });
+
+    function setAspectRatio(ratio) {
+      currentAspect = ratio;
+      renderCanvas();
+    }
+
+    function renderCanvasForImage(photoIndex) {
+      if (uploadedPhotos.length === 0 || !uploadedPhotos[photoIndex]) return null;
+      const baseImg = uploadedPhotos[photoIndex];
+
+      let targetW = baseImg.naturalWidth || baseImg.width;
+      let targetH = baseImg.naturalHeight || baseImg.height;
+
+      if (currentAspect !== 'original') {
+        if (targetW / targetH > currentAspect) {
+          targetW = targetH * currentAspect;
+        } else {
+          targetH = targetW / currentAspect;
+        }
+      }
+
+      const tempCanvas = document.createElement('canvas');
+      tempCanvas.width = targetW;
+      tempCanvas.height = targetH;
+      const tempCtx = tempCanvas.getContext('2d');
+
+      tempCtx.filter = `brightness(${brightness}%)`;
+      const cropX = ((baseImg.naturalWidth || baseImg.width) - targetW) / 2;
+      const cropY = ((baseImg.naturalHeight || baseImg.height) - targetH) / 2;
+      tempCtx.drawImage(baseImg, cropX, cropY, targetW, targetH, 0, 0, targetW, targetH);
+      tempCtx.filter = 'none';
+
+      canvasLogos.forEach((item, idx) => {
+        const logoImg = loadedLogoImgs[item.imgIndex];
+        if (!logoImg) return;
+
+        const lWidth = targetW * item.scale;
+        const lHeight = (logoImg.naturalHeight / logoImg.naturalWidth) * lWidth;
+        const lx = (item.x / 100) * (targetW - lWidth);
+        const ly = (item.y / 100) * (targetH - lHeight);
+
+        tempCtx.save();
+        tempCtx.globalAlpha = item.opacity;
+
+        if (item.effect === 'shadow') {
+          tempCtx.shadowColor = 'rgba(0, 0, 0, 0.6)';
+          tempCtx.shadowBlur = 12;
+          tempCtx.shadowOffsetX = 4;
+          tempCtx.shadowOffsetY = 4;
+        } else if (item.effect === 'white-glow') {
+          tempCtx.shadowColor = 'white';
+          tempCtx.shadowBlur = 15;
+        } else if (item.effect === 'black-glow') {
+          tempCtx.shadowColor = 'black';
+          tempCtx.shadowBlur = 15;
+        }
+
+        if (item.frame === 'circle') {
+          tempCtx.beginPath();
+          const centerX = lx + lWidth / 2;
+          const centerY = ly + lHeight / 2;
+          const radius = Math.min(lWidth, lHeight) / 2;
+          tempCtx.arc(centerX, centerY, radius, 0, Math.PI * 2);
+          tempCtx.closePath();
+          tempCtx.clip();
+        } else if (item.frame === 'rounded') {
+          tempCtx.beginPath();
+          const r = Math.min(lWidth, lHeight) * 0.15;
+          tempCtx.moveTo(lx + r, ly);
+          tempCtx.arcTo(lx + lWidth, ly, lx + lWidth, ly + lHeight, r);
+          tempCtx.arcTo(lx + lWidth, ly + lHeight, lx, ly + lHeight, r);
+          tempCtx.arcTo(lx, ly + lHeight, lx, ly, r);
+          tempCtx.arcTo(lx, ly, lx + lWidth, ly, r);
+          tempCtx.closePath();
+          tempCtx.clip();
+        } else if (item.frame === 'white-border') {
+          tempCtx.fillStyle = '#ffffff';
+          const pad = Math.max(3, targetW * 0.005);
+          tempCtx.fillRect(lx - pad, ly - pad, lWidth + (pad * 2), lHeight + (pad * 2));
+        }
+
+        tempCtx.drawImage(logoImg, lx, ly, lWidth, lHeight);
+        tempCtx.restore();
+
+        if (photoIndex === currentPhotoIndex && idx === activeCanvasLogoIndex) {
+          tempCtx.strokeStyle = '#2563eb';
+          tempCtx.lineWidth = Math.max(2, targetW * 0.003);
+          tempCtx.strokeRect(lx, ly, lWidth, lHeight);
+        }
+      });
+
+      if (textState.enabled && textState.text.trim() !== '') {
+        tempCtx.save();
+        const fontPx = Math.max(12, Math.round((textState.size / 1000) * targetW));
+        tempCtx.font = `bold ${fontPx}px sans-serif`;
+        tempCtx.fillStyle = textState.color;
+        tempCtx.textAlign = 'center';
+        tempCtx.textBaseline = 'middle';
+
+        tempCtx.shadowColor = 'rgba(0,0,0,0.8)';
+        tempCtx.shadowBlur = 6;
+        tempCtx.shadowOffsetX = 2;
+        tempCtx.shadowOffsetY = 2;
+
+        const tx = (textState.x / 100) * targetW;
+        const ty = (textState.y / 100) * targetH;
+        tempCtx.fillText(textState.text, tx, ty);
+        tempCtx.restore();
+      }
+
+      return tempCanvas;
+    }
+
+    function renderCanvas() {
+      const rendered = renderCanvasForImage(currentPhotoIndex);
+      if (!rendered) return;
+      canvas.width = rendered.width;
+      canvas.height = rendered.height;
+      ctx.drawImage(rendered, 0, 0);
+      updateFileSizeEstimate();
+    }
+
+    function getPointerPos(e) {
+      const rect = canvas.getBoundingClientRect();
+      const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+      const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+      return {
+        x: (clientX - rect.left) / rect.width * 100,
+        y: (clientY - rect.top) / rect.height * 100
+      };
+    }
+
+    canvas.addEventListener('mousedown', startDrag);
+    canvas.addEventListener('touchstart', startDrag);
+    window.addEventListener('mousemove', drag);
+    window.addEventListener('touchmove', drag);
+    window.addEventListener('mouseup', endDrag);
+    window.addEventListener('touchend', endDrag);
+
+    function startDrag(e) {
+      isDragging = true;
+      dragStart = getPointerPos(e);
+    }
+
+    function drag(e) {
+      if (!isDragging) return;
+      const currentPos = getPointerPos(e);
+      const dx = currentPos.x - dragStart.x;
+      const dy = currentPos.y - dragStart.y;
+
+      if (activeCanvasLogoIndex !== -1) {
+        const item = canvasLogos[activeCanvasLogoIndex];
+        item.x = Math.max(0, Math.min(100, item.x + dx));
+        item.y = Math.max(0, Math.min(100, item.y + dy));
+      } else if (textState.enabled) {
+        textState.x = Math.max(0, Math.min(100, textState.x + dx));
+        textState.y = Math.max(0, Math.min(100, textState.y + dy));
+      }
+
+      dragStart = currentPos;
+      renderCanvas();
+    }
+
+    function endDrag() { isDragging = false; }
+
+    const exportFormatSelect = document.getElementById('exportFormat');
+    const jpegSettingsGroup = document.getElementById('jpegSettingsGroup');
+    const jpegQualityInput = document.getElementById('jpegQuality');
+    const jpegResolutionSelect = document.getElementById('jpegResolution');
+
+    exportFormatSelect.addEventListener('change', (e) => {
+      jpegSettingsGroup.classList.toggle('hidden', e.target.value !== 'image/jpeg');
+      renderCanvas();
+    });
+
+    jpegQualityInput.addEventListener('input', (e) => {
+      document.getElementById('qualityVal').innerText = e.target.value;
+      renderCanvas();
+    });
+
+    jpegResolutionSelect.addEventListener('change', () => { renderCanvas(); });
+
+    function getFinalCanvas(sourceCanvas) {
+      const format = exportFormatSelect.value;
+      let finalCanvas = sourceCanvas;
+
+      if (format === 'image/jpeg') {
+        const scale = parseFloat(jpegResolutionSelect.value);
+        if (scale !== 1.0) {
+          const scaledCanvas = document.createElement('canvas');
+          scaledCanvas.width = sourceCanvas.width * scale;
+          scaledCanvas.height = sourceCanvas.height * scale;
+          const sCtx = scaledCanvas.getContext('2d');
+          sCtx.drawImage(sourceCanvas, 0, 0, scaledCanvas.width, scaledCanvas.height);
+          finalCanvas = scaledCanvas;
+        }
+      }
+      return finalCanvas;
+    }
+
+    function updateFileSizeEstimate() {
+      if (uploadedPhotos.length === 0) return;
+      const format = exportFormatSelect.value;
+      const quality = format === 'image/jpeg' ? jpegQualityInput.value / 100 : 1.0;
+      const targetCanvas = getFinalCanvas(canvas);
+
+      const dataUrl = targetCanvas.toDataURL(format, quality);
+      const head = `data:${format};base64,`;
+      const sizeInBytes = Math.round((dataUrl.length - head.length) * 3 / 4);
+
+      let sizeStr = '';
+      if (sizeInBytes >= 1024 * 1024) {
+        sizeStr = (sizeInBytes / (1024 * 1024)).toFixed(2) + ' MB';
+      } else {
+        sizeStr = (sizeInBytes / 1024).toFixed(1) + ' KB';
+      }
+      document.getElementById('fileSizeEst').innerText = sizeStr;
+    }
+
+    document.getElementById('downloadBtn').addEventListener('click', () => {
+      if (uploadedPhotos.length === 0) {
+        alert('กรุณาอัปโหลดรูปภาพก่อนส่งออก');
+        return;
+      }
+      const format = exportFormatSelect.value;
+      const quality = format === 'image/jpeg' ? jpegQualityInput.value / 100 : 1.0;
+      const targetCanvas = getFinalCanvas(canvas);
+
+      const dataUrl = targetCanvas.toDataURL(format, quality);
+      const link = document.createElement('a');
+      const ext = format === 'image/png' ? 'png' : 'jpg';
+      link.download = `watermark_photo_${Date.now()}.${ext}`;
+      link.href = dataUrl;
+      link.click();
+    });
+
+    document.getElementById('downloadZipBtn').addEventListener('click', async () => {
+      if (uploadedPhotos.length === 0) {
+        alert('กรุณาอัปโหลดรูปภาพก่อนส่งออก');
+        return;
+      }
+
+      const zip = new JSZip();
+      const format = exportFormatSelect.value;
+      const quality = format === 'image/jpeg' ? jpegQualityInput.value / 100 : 1.0;
+      const ext = format === 'image/png' ? 'png' : 'jpg';
+
+      for (let i = 0; i < uploadedPhotos.length; i++) {
+        const rawCanvas = renderCanvasForImage(i);
+        const finalCanvas = getFinalCanvas(rawCanvas);
+        const dataUrl = finalCanvas.toDataURL(format, quality);
+        const base64Data = dataUrl.replace(/^data:image\/(png|jpeg);base64,/, "");
+        zip.file(`edited_photo_${i + 1}.${ext}`, base64Data, { base64: true });
+      }
+
+      const content = await zip.generateAsync({ type: "blob" });
+      saveAs(content, `batch_watermarked_photos_${Date.now()}.zip`);
+    });
+
+    loadLogosFromStorage();
+  </script>
+</body>
+</html>
