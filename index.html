@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="th" class="dark">
 <head>
@@ -17,22 +18,29 @@
 <body class="bg-gray-100 dark:bg-gray-900 text-gray-800 dark:text-gray-100 font-sans min-h-screen pb-10 transition-colors">
 
   <!-- Header -->
-  <header class="bg-blue-600 dark:bg-gray-800 text-white p-4 sticky top-0 z-50 shadow-md flex justify-between items-center">
-    <h1 class="text-lg font-bold">Batch Photo & Watermark Editor</h1>
-    <!-- Theme Toggle Button -->
-    <button id="themeToggleBtn" class="p-2 bg-blue-700 dark:bg-gray-700 rounded-lg text-xs font-medium hover:opacity-90">
-      🌙 / ☀️
-    </button>
+  <header class="bg-blue-600 dark:bg-gray-800 text-white p-3 sticky top-0 z-50 shadow-md flex justify-between items-center gap-2">
+    <h1 class="text-sm font-bold truncate">Batch Editor</h1>
+    
+    <div class="flex items-center gap-2 flex-shrink-0">
+      <input type="file" id="photoInput" accept="image/*" multiple class="hidden">
+      <button onclick="document.getElementById('photoInput').click()" class="bg-blue-700 hover:bg-blue-800 dark:bg-gray-700 dark:hover:bg-gray-600 px-3 py-1.5 rounded-lg text-xs font-medium border border-blue-500 dark:border-gray-600 flex items-center gap-1">
+        📷 เลือกรูป (<span id="photoCount">0</span>/30)
+      </button>
+
+      <button id="themeToggleBtn" class="p-1.5 bg-blue-700 dark:bg-gray-700 rounded-lg text-xs font-medium hover:opacity-90">
+        🌙 / ☀️
+      </button>
+    </div>
   </header>
 
   <main class="max-w-md mx-auto p-4 space-y-6">
 
-    <!-- Section 1: Logo Management (Persistent via LocalStorage) -->
+    <!-- Section 1: Logo Management -->
     <section class="bg-white dark:bg-gray-800 p-4 rounded-xl shadow transition-colors">
       <h2 class="text-lg font-semibold mb-3 flex items-center justify-between">
         <span>1. จัดการคลังโลโก้</span>
         <label class="text-sm bg-blue-50 dark:bg-blue-900/50 text-blue-600 dark:text-blue-300 font-normal px-2 py-1 rounded border border-blue-200 dark:border-blue-700 cursor-pointer">
-          + เพิ่มโลโก้เข้าคลัง
+          + เพิ่มโลโก้
           <input type="file" id="logoInput" accept="image/*" multiple class="hidden">
         </label>
       </h2>
@@ -42,19 +50,13 @@
       <p class="text-[10px] text-gray-400 mt-1">* โลโก้จะถูกบันทึกไว้ในเครื่อง เปิดใช้งานครั้งหน้าไม่ต้องอัปโหลดใหม่</p>
     </section>
 
-    <!-- Section 2: Upload Photos (Max 30) -->
-    <section class="bg-white dark:bg-gray-800 p-4 rounded-xl shadow transition-colors">
-      <h2 class="text-lg font-semibold mb-2">2. อัปโหลดรูปภาพ (สูงสุด 30 รูป)</h2>
-      <input type="file" id="photoInput" accept="image/*" multiple class="hidden">
-      <button onclick="document.getElementById('photoInput').click()" class="w-full py-3 bg-gray-50 dark:bg-gray-700 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg text-gray-600 dark:text-gray-200 font-medium hover:bg-gray-100">
-        เลือกรูปภาพ (<span id="photoCount">0</span>/30)
-      </button>
-      <div id="photoThumbnails" class="flex gap-2 overflow-x-auto mt-3"></div>
-    </section>
-
-    <!-- Section 3: Editor Canvas -->
+    <!-- Section 2: Editor Canvas -->
     <section class="bg-white dark:bg-gray-800 p-4 rounded-xl shadow relative transition-colors">
-      <h2 class="text-lg font-semibold mb-2">3. ปรับแต่งภาพและจัดวางโลโก้</h2>
+      <h2 class="text-lg font-semibold mb-2">2. ปรับแต่งภาพและจัดวางโลโก้</h2>
+      
+      <!-- Photo Thumbnails List -->
+      <div id="photoThumbnails" class="flex gap-2 overflow-x-auto mb-3 min-h-[56px] py-1 border-b dark:border-gray-700"></div>
+
       <div class="relative w-full aspect-square bg-gray-200 dark:bg-gray-900 rounded overflow-hidden flex items-center justify-center">
         <canvas id="mainCanvas" class="max-w-full max-h-full border border-gray-300 dark:border-gray-700"></canvas>
       </div>
@@ -90,9 +92,20 @@
           <input type="range" id="logoOpacitySlider" min="0" max="100" value="100" class="w-full">
         </div>
 
+        <!-- Frame Style (เพิ่มส่วนนี้) -->
+        <div>
+          <label class="text-xs font-medium text-gray-600 dark:text-gray-300">ใส่กรอบโลโก้ (Shape / Frame)</label>
+          <select id="logoFrameSelect" class="w-full mt-1 p-1.5 text-xs border rounded bg-white dark:bg-gray-700 dark:border-gray-600">
+            <option value="none">ไม่มีกรอบ (Original)</option>
+            <option value="circle">กรอบวงกลม (Circle)</option>
+            <option value="rounded">กรอบสี่เหลี่ยมมุมมน (Rounded Box)</option>
+            <option value="white-border">กรอบขอบเส้นทึบสีขาว (White Border)</option>
+          </select>
+        </div>
+
         <!-- Border / Shadow Effect -->
         <div>
-          <label class="text-xs font-medium text-gray-600 dark:text-gray-300">เอฟเฟกต์ขอบ / เงา</label>
+          <label class="text-xs font-medium text-gray-600 dark:text-gray-300">เอฟเฟกต์เงา (Effect)</label>
           <select id="logoEffectSelect" class="w-full mt-1 p-1.5 text-xs border rounded bg-white dark:bg-gray-700 dark:border-gray-600">
             <option value="none">ไม่มีเอฟเฟกต์ (None)</option>
             <option value="shadow">เงาพื้นหลัง (Drop Shadow)</option>
@@ -123,9 +136,9 @@
       </div>
     </section>
 
-    <!-- Section 4: Export Settings & File Size Preview -->
+    <!-- Section 3: Export Settings & File Size Preview -->
     <section class="bg-white dark:bg-gray-800 p-4 rounded-xl shadow space-y-3 transition-colors">
-      <h2 class="text-lg font-semibold">4. ส่งออกรูปภาพ</h2>
+      <h2 class="text-lg font-semibold">3. ส่งออกรูปภาพ</h2>
       <div>
         <label class="text-xs font-medium text-gray-600 dark:text-gray-300">ฟอร์แมตไฟล์</label>
         <select id="exportFormat" class="w-full mt-1 p-2 border rounded bg-white dark:bg-gray-700 dark:border-gray-600">
@@ -165,15 +178,13 @@
   </main>
 
   <script>
-    // Global State
-    let storedLogos = []; // Base64 stored logos
-    let loadedLogoImgs = []; // Image Objects
+    let storedLogos = [];
+    let loadedLogoImgs = [];
     let selectedStorageLogoIndex = -1;
     let uploadedPhotos = [];
     let currentPhotoIndex = 0;
 
-    // Canvas Multi-Logo Layer State
-    let canvasLogos = []; // { imgIndex, x, y, scale, opacity, effect }
+    let canvasLogos = [];
     let activeCanvasLogoIndex = -1;
 
     const canvas = document.getElementById('mainCanvas');
@@ -189,7 +200,7 @@
       document.documentElement.classList.toggle('dark');
     });
 
-    // --- LocalStorage Logo Persistence ---
+    // --- LocalStorage Logo ---
     function loadLogosFromStorage() {
       const saved = localStorage.getItem('app_saved_logos');
       if (saved) {
@@ -314,7 +325,7 @@
       uploadedPhotos.forEach((photo, idx) => {
         const thumb = document.createElement('img');
         thumb.src = photo.src;
-        thumb.className = `h-14 w-14 object-cover rounded cursor-pointer border-2 ${idx === currentPhotoIndex ? 'border-blue-600' : 'border-transparent'}`;
+        thumb.className = `h-12 w-12 object-cover rounded cursor-pointer border-2 flex-shrink-0 ${idx === currentPhotoIndex ? 'border-blue-600' : 'border-transparent'}`;
         thumb.onclick = () => {
           currentPhotoIndex = idx;
           renderPhotoThumbnails();
@@ -324,7 +335,7 @@
       });
     }
 
-    // --- Multi-Logo Canvas Placement ---
+    // --- Multi-Logo Placement ---
     document.getElementById('addLogoToCanvasBtn').addEventListener('click', () => {
       if (selectedStorageLogoIndex === -1 || !loadedLogoImgs[selectedStorageLogoIndex]) {
         alert('กรุณาเลือกหรืออัปโหลดโลโก้เข้าคลังก่อน');
@@ -336,6 +347,7 @@
         y: 40 + (canvasLogos.length * 5),
         scale: 0.3,
         opacity: 1.0,
+        frame: 'none',
         effect: 'none'
       });
       activeCanvasLogoIndex = canvasLogos.length - 1;
@@ -377,7 +389,8 @@
       document.getElementById('logoScaleSlider').value = logo.scale * 100;
       document.getElementById('logoOpacitySlider').value = logo.opacity * 100;
       document.getElementById('opacityVal').innerText = Math.round(logo.opacity * 100);
-      document.getElementById('logoEffectSelect').value = logo.effect;
+      document.getElementById('logoFrameSelect').value = logo.frame || 'none';
+      document.getElementById('logoEffectSelect').value = logo.effect || 'none';
     }
 
     function removeActiveLogo() {
@@ -406,6 +419,13 @@
       }
     });
 
+    document.getElementById('logoFrameSelect').addEventListener('change', (e) => {
+      if (activeCanvasLogoIndex !== -1) {
+        canvasLogos[activeCanvasLogoIndex].frame = e.target.value;
+        renderCanvas();
+      }
+    });
+
     document.getElementById('logoEffectSelect').addEventListener('change', (e) => {
       if (activeCanvasLogoIndex !== -1) {
         canvasLogos[activeCanvasLogoIndex].effect = e.target.value;
@@ -423,7 +443,7 @@
       renderCanvas();
     }
 
-    // --- Render Canvas ---
+    // --- Render Canvas & Logo Frame Shapes ---
     function renderCanvas() {
       if (uploadedPhotos.length === 0) return;
       const baseImg = uploadedPhotos[currentPhotoIndex];
@@ -442,7 +462,6 @@
       canvas.width = targetW;
       canvas.height = targetH;
 
-      // Draw Main Photo
       ctx.filter = `brightness(${brightness}%)`;
       const cropX = (baseImg.naturalWidth - targetW) / 2;
       const cropY = (baseImg.naturalHeight - targetH) / 2;
@@ -450,7 +469,6 @@
       ctx.drawImage(baseImg, cropX, cropY, targetW, targetH, 0, 0, targetW, targetH);
       ctx.filter = 'none';
 
-      // Draw Placed Logos
       canvasLogos.forEach((item, idx) => {
         const logoImg = loadedLogoImgs[item.imgIndex];
         if (!logoImg) return;
@@ -463,7 +481,7 @@
         ctx.save();
         ctx.globalAlpha = item.opacity;
 
-        // Apply Border Effect
+        // Apply Shadow Effects
         if (item.effect === 'shadow') {
           ctx.shadowColor = 'rgba(0, 0, 0, 0.6)';
           ctx.shadowBlur = 12;
@@ -477,10 +495,34 @@
           ctx.shadowBlur = 15;
         }
 
+        // Apply Frame Shapes
+        if (item.frame === 'circle') {
+          ctx.beginPath();
+          const centerX = lx + lWidth / 2;
+          const centerY = ly + lHeight / 2;
+          const radius = Math.min(lWidth, lHeight) / 2;
+          ctx.arc(centerX, centerY, radius, 0, Math.PI * 2);
+          ctx.closePath();
+          ctx.clip();
+        } else if (item.frame === 'rounded') {
+          ctx.beginPath();
+          const r = Math.min(lWidth, lHeight) * 0.15;
+          ctx.moveTo(lx + r, ly);
+          ctx.arcTo(lx + lWidth, ly, lx + lWidth, ly + lHeight, r);
+          ctx.arcTo(lx + lWidth, ly + lHeight, lx, ly + lHeight, r);
+          ctx.arcTo(lx, ly + lHeight, lx, ly, r);
+          ctx.arcTo(lx, ly, lx + lWidth, ly, r);
+          ctx.closePath();
+          ctx.clip();
+        } else if (item.frame === 'white-border') {
+          ctx.fillStyle = '#ffffff';
+          const pad = Math.max(3, targetW * 0.005);
+          ctx.fillRect(lx - pad, ly - pad, lWidth + (pad * 2), lHeight + (pad * 2));
+        }
+
         ctx.drawImage(logoImg, lx, ly, lWidth, lHeight);
         ctx.restore();
 
-        // Active Selection Box
         if (idx === activeCanvasLogoIndex) {
           ctx.strokeStyle = '#2563eb';
           ctx.lineWidth = Math.max(2, targetW * 0.003);
@@ -531,7 +573,7 @@
 
     function endDrag() { isDragging = false; }
 
-    // --- Export & File Size Estimation ---
+    // --- Export & Size ---
     const exportFormatSelect = document.getElementById('exportFormat');
     const jpegSettingsGroup = document.getElementById('jpegSettingsGroup');
     const jpegQualityInput = document.getElementById('jpegQuality');
@@ -603,648 +645,8 @@
       link.click();
     });
 
-    // Init App
+    // Init
     loadLogosFromStorage();
-  </script>
-</body>
-</html>
-      <h2 class="text-lg font-semibold mb-2">2. อัปโหลดรูปภาพ (สูงสุด 30 รูป)</h2>
-      <input type="file" id="photoInput" accept="image/*" multiple class="hidden">
-      <button onclick="document.getElementById('photoInput').click()" class="w-full py-3 bg-gray-50 border-2 border-dashed border-gray-300 rounded-lg text-gray-600 font-medium hover:bg-gray-100">
-        เลือกรูปภาพ (<span id="photoCount">0</span>/30)
-      </button>
-      <div id="photoThumbnails" class="flex gap-2 overflow-x-auto mt-3"></div>
-    </section>
-
-    <!-- Section 3: Editor Canvas -->
-    <section class="bg-white p-4 rounded-xl shadow relative">
-      <h2 class="text-lg font-semibold mb-2">3. ปรับแต่งภาพและจัดวางโลโก้</h2>
-      <div class="relative w-full aspect-square bg-gray-200 rounded overflow-hidden flex items-center justify-center">
-        <canvas id="mainCanvas" class="max-w-full max-h-full border"></canvas>
-      </div>
-      <p class="text-xs text-gray-500 mt-1 text-center">ใช้นิ้วลากเพื่อเปลี่ยนตำแหน่งโลโก้ได้เลย</p>
-
-      <!-- Edit Controls -->
-      <div class="mt-4 space-y-3">
-        <!-- Brightness -->
-        <div>
-          <label class="text-xs font-medium text-gray-600">ปรับความสว่างภาพ</label>
-          <input type="range" id="brightnessSlider" min="50" max="150" value="100" class="w-full">
-        </div>
-
-        <!-- Crop Aspect Ratio -->
-        <div>
-          <label class="text-xs font-medium text-gray-600">อัตราส่วนภาพ (Crop)</label>
-          <div class="grid grid-cols-4 gap-2 mt-1">
-            <button onclick="setAspectRatio('original')" class="px-2 py-1 bg-gray-100 text-xs rounded border hover:bg-blue-50">Original</button>
-            <button onclick="setAspectRatio(1)" class="px-2 py-1 bg-gray-100 text-xs rounded border hover:bg-blue-50">1:1</button>
-            <button onclick="setAspectRatio(4/5)" class="px-2 py-1 bg-gray-100 text-xs rounded border hover:bg-blue-50">4:5</button>
-            <button onclick="setAspectRatio(16/9)" class="px-2 py-1 bg-gray-100 text-xs rounded border hover:bg-blue-50">16:9</button>
-          </div>
-        </div>
-
-        <!-- Logo Scale Controls -->
-        <div>
-          <label class="text-xs font-medium text-gray-600">ขนาดโลโก้</label>
-          <input type="range" id="logoScaleSlider" min="10" max="100" value="30" class="w-full">
-        </div>
-
-        <!-- Logo Opacity Controls -->
-        <div>
-          <label class="text-xs font-medium text-gray-600">ความโปร่งแสงโลโก้ (<span id="opacityVal">100</span>%)</label>
-          <input type="range" id="logoOpacitySlider" min="0" max="100" value="100" class="w-full">
-        </div>
-      </div>
-    </section>
-
-    <!-- Section 4: Export Settings -->
-    <section class="bg-white p-4 rounded-xl shadow space-y-3">
-      <h2 class="text-lg font-semibold">4. ส่งออกรูปภาพ</h2>
-      <div>
-        <label class="text-xs font-medium text-gray-600">ฟอร์แมตไฟล์</label>
-        <select id="exportFormat" class="w-full mt-1 p-2 border rounded bg-white">
-          <option value="image/png">PNG (โปร่งใส / คุณภาพสูงสุด)</option>
-          <option value="image/jpeg">JPEG (ปรับขนาดและความละเอียดได้)</option>
-        </select>
-      </div>
-
-      <!-- JPEG Specific Settings -->
-      <div id="jpegSettingsGroup" class="hidden space-y-3">
-        <div>
-          <label class="text-xs font-medium text-gray-600">ความละเอียดภาพ (Resolution)</label>
-          <select id="jpegResolution" class="w-full mt-1 p-2 border rounded bg-white">
-            <option value="1.0">สูง (High - 100% ขนาดต้นฉบับ)</option>
-            <option value="0.7">กลาง (Medium - 70% ขนาดต้นฉบับ)</option>
-            <option value="0.5">ต่ำ (Low - 50% ขนาดต้นฉบับ)</option>
-          </select>
-        </div>
-
-        <div>
-          <label class="text-xs font-medium text-gray-600">คุณภาพไฟล์ JPEG (<span id="qualityVal">90</span>%)</label>
-          <input type="range" id="jpegQuality" min="10" max="100" value="90" class="w-full">
-        </div>
-      </div>
-
-      <button id="downloadBtn" class="w-full py-3 bg-green-600 text-white font-bold rounded-lg shadow hover:bg-green-700">
-        บันทึกภาพ
-      </button>
-    </section>
-
-  </main>
-
-  <script>
-    // App State
-    let uploadedLogos = [];
-    let selectedLogoIndex = -1;
-    let uploadedPhotos = [];
-    let currentPhotoIndex = 0;
-    
-    // Canvas & Layer State
-    const canvas = document.getElementById('mainCanvas');
-    const ctx = canvas.getContext('2d');
-    let currentAspect = 'original';
-    let brightness = 100;
-    
-    // Logo position, scale, and opacity state
-    let logoState = { x: 50, y: 50, scale: 0.3, opacity: 1.0 };
-    let isDragging = false;
-    let dragStart = { x: 0, y: 0 };
-
-    // --- 1. Logo Management ---
-    document.getElementById('logoInput').addEventListener('change', (e) => {
-      const files = Array.from(e.target.files);
-      files.forEach(file => {
-        const reader = new FileReader();
-        reader.onload = (event) => {
-          const img = new Image();
-          img.onload = () => {
-            uploadedLogos.push(img);
-            if (selectedLogoIndex === -1) selectedLogoIndex = 0;
-            renderLogoGallery();
-            renderCanvas();
-          };
-          img.src = event.target.result;
-        };
-        reader.readAsDataURL(file);
-      });
-    });
-
-    function renderLogoGallery() {
-      const gallery = document.getElementById('logoGallery');
-      const noLogoText = document.getElementById('noLogoText');
-      if (uploadedLogos.length > 0) noLogoText.style.display = 'none';
-
-      gallery.innerHTML = '';
-      uploadedLogos.forEach((logo, index) => {
-        const imgEl = document.createElement('img');
-        imgEl.src = logo.src;
-        imgEl.className = `h-12 w-12 object-contain border-2 rounded p-1 cursor-pointer ${index === selectedLogoIndex ? 'border-blue-500 bg-blue-50' : 'border-gray-200'}`;
-        imgEl.onclick = () => {
-          selectedLogoIndex = index;
-          renderLogoGallery();
-          renderCanvas();
-        };
-        gallery.appendChild(imgEl);
-      });
-    }
-
-    // --- 2. Photo Upload ---
-    document.getElementById('photoInput').addEventListener('change', (e) => {
-      const files = Array.from(e.target.files);
-      if (files.length > 30) {
-        alert('เลือกรูปภาพได้ไม่เกิน 30 รูป');
-        return;
-      }
-      uploadedPhotos = [];
-      document.getElementById('photoCount').innerText = files.length;
-      
-      let loadedCount = 0;
-      files.forEach((file, index) => {
-        const reader = new FileReader();
-        reader.onload = (event) => {
-          const img = new Image();
-          img.onload = () => {
-            uploadedPhotos[index] = img;
-            loadedCount++;
-            if (loadedCount === files.length) {
-              currentPhotoIndex = 0;
-              renderPhotoThumbnails();
-              renderCanvas();
-            }
-          };
-          img.src = event.target.result;
-        };
-        reader.readAsDataURL(file);
-      });
-    });
-
-    function renderPhotoThumbnails() {
-      const container = document.getElementById('photoThumbnails');
-      container.innerHTML = '';
-      uploadedPhotos.forEach((photo, idx) => {
-        const thumb = document.createElement('img');
-        thumb.src = photo.src;
-        thumb.className = `h-14 w-14 object-cover rounded cursor-pointer border-2 ${idx === currentPhotoIndex ? 'border-blue-600' : 'border-transparent'}`;
-        thumb.onclick = () => {
-          currentPhotoIndex = idx;
-          renderPhotoThumbnails();
-          renderCanvas();
-        };
-        container.appendChild(thumb);
-      });
-    }
-
-    // --- 3. Canvas Rendering & Controls ---
-    function setAspectRatio(ratio) {
-      currentAspect = ratio;
-      renderCanvas();
-    }
-
-    document.getElementById('brightnessSlider').addEventListener('input', (e) => {
-      brightness = e.target.value;
-      renderCanvas();
-    });
-
-    document.getElementById('logoScaleSlider').addEventListener('input', (e) => {
-      logoState.scale = e.target.value / 100;
-      renderCanvas();
-    });
-
-    document.getElementById('logoOpacitySlider').addEventListener('input', (e) => {
-      logoState.opacity = e.target.value / 100;
-      document.getElementById('opacityVal').innerText = e.target.value;
-      renderCanvas();
-    });
-
-    function renderCanvas() {
-      if (uploadedPhotos.length === 0) return;
-      const baseImg = uploadedPhotos[currentPhotoIndex];
-
-      let targetW = baseImg.naturalWidth;
-      let targetH = baseImg.naturalHeight;
-
-      if (currentAspect !== 'original') {
-        if (targetW / targetH > currentAspect) {
-          targetW = targetH * currentAspect;
-        } else {
-          targetH = targetW / currentAspect;
-        }
-      }
-
-      canvas.width = targetW;
-      canvas.height = targetH;
-
-      ctx.filter = `brightness(${brightness}%)`;
-      const cropX = (baseImg.naturalWidth - targetW) / 2;
-      const cropY = (baseImg.naturalHeight - targetH) / 2;
-
-      ctx.drawImage(
-        baseImg,
-        cropX, cropY, targetW, targetH,
-        0, 0, targetW, targetH
-      );
-      ctx.filter = 'none';
-
-      if (selectedLogoIndex !== -1 && uploadedLogos[selectedLogoIndex]) {
-        const logo = uploadedLogos[selectedLogoIndex];
-        const lWidth = targetW * logoState.scale;
-        const lHeight = (logo.naturalHeight / logo.naturalWidth) * lWidth;
-
-        const lx = (logoState.x / 100) * (targetW - lWidth);
-        const ly = (logoState.y / 100) * (targetH - lHeight);
-
-        ctx.save();
-        ctx.globalAlpha = logoState.opacity;
-        ctx.drawImage(logo, lx, ly, lWidth, lHeight);
-        ctx.restore();
-      }
-    }
-
-    // --- 4. Touch & Drag Controls ---
-    function getPointerPos(e) {
-      const rect = canvas.getBoundingClientRect();
-      const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-      const clientY = e.touches ? e.touches[0].clientY : e.clientY;
-      return {
-        x: (clientX - rect.left) / rect.width * 100,
-        y: (clientY - rect.top) / rect.height * 100
-      };
-    }
-
-    canvas.addEventListener('mousedown', startDrag);
-    canvas.addEventListener('touchstart', startDrag);
-    window.addEventListener('mousemove', drag);
-    window.addEventListener('touchmove', drag);
-    window.addEventListener('mouseup', endDrag);
-    window.addEventListener('touchend', endDrag);
-
-    function startDrag(e) {
-      isDragging = true;
-      dragStart = getPointerPos(e);
-    }
-
-    function drag(e) {
-      if (!isDragging) return;
-      const currentPos = getPointerPos(e);
-      const dx = currentPos.x - dragStart.x;
-      const dy = currentPos.y - dragStart.y;
-
-      logoState.x = Math.max(0, Math.min(100, logoState.x + dx));
-      logoState.y = Math.max(0, Math.min(100, logoState.y + dy));
-
-      dragStart = currentPos;
-      renderCanvas();
-    }
-
-    function endDrag() {
-      isDragging = false;
-    }
-
-    // --- 5. Export with Resolution Scaling ---
-    const exportFormatSelect = document.getElementById('exportFormat');
-    const jpegSettingsGroup = document.getElementById('jpegSettingsGroup');
-    const jpegQualityInput = document.getElementById('jpegQuality');
-    const jpegResolutionSelect = document.getElementById('jpegResolution');
-
-    exportFormatSelect.addEventListener('change', (e) => {
-      jpegSettingsGroup.classList.toggle('hidden', e.target.value !== 'image/jpeg');
-    });
-
-    jpegQualityInput.addEventListener('input', (e) => {
-      document.getElementById('qualityVal').innerText = e.target.value;
-    });
-
-    document.getElementById('downloadBtn').addEventListener('click', () => {
-      if (uploadedPhotos.length === 0) {
-        alert('กรุณาอัปโหลดรูปภาพก่อนส่งออก');
-        return;
-      }
-      
-      const format = exportFormatSelect.value;
-      let finalCanvas = canvas;
-
-      // Handle JPEG Resolution Scaling
-      if (format === 'image/jpeg') {
-        const scale = parseFloat(jpegResolutionSelect.value);
-        if (scale !== 1.0) {
-          const scaledCanvas = document.createElement('canvas');
-          scaledCanvas.width = canvas.width * scale;
-          scaledCanvas.height = canvas.height * scale;
-          const sCtx = scaledCanvas.getContext('2d');
-          sCtx.drawImage(canvas, 0, 0, scaledCanvas.width, scaledCanvas.height);
-          finalCanvas = scaledCanvas;
-        }
-      }
-
-      const quality = format === 'image/jpeg' ? jpegQualityInput.value / 100 : 1.0;
-      const dataUrl = finalCanvas.toDataURL(format, quality);
-      const link = document.createElement('a');
-      const ext = format === 'image/png' ? 'png' : 'jpg';
-      link.download = `edited_photo_${Date.now()}.${ext}`;
-      link.href = dataUrl;
-      link.click();
-    });
-  </script>
-</body>
-</html>
-      <h2 class="text-lg font-semibold mb-2">2. อัปโหลดรูปภาพ (สูงสุด 30 รูป)</h2>
-      <input type="file" id="photoInput" accept="image/*" multiple class="hidden">
-      <button onclick="document.getElementById('photoInput').click()" class="w-full py-3 bg-gray-50 border-2 border-dashed border-gray-300 rounded-lg text-gray-600 font-medium hover:bg-gray-100">
-        เลือกรูปภาพ (<span id="photoCount">0</span>/30)
-      </button>
-      <div id="photoThumbnails" class="flex gap-2 overflow-x-auto mt-3"></div>
-    </section>
-
-    <!-- Section 3: Editor Canvas -->
-    <section class="bg-white p-4 rounded-xl shadow relative">
-      <h2 class="text-lg font-semibold mb-2">3. ปรับแต่งภาพและจัดวางโลโก้</h2>
-      <div class="relative w-full aspect-square bg-gray-200 rounded overflow-hidden flex items-center justify-center">
-        <canvas id="mainCanvas" class="max-w-full max-h-full border"></canvas>
-      </div>
-      <p class="text-xs text-gray-500 mt-1 text-center">ใช้นิ้วลากเพื่อเปลี่ยนตำแหน่งโลโก้ได้เลย</p>
-
-      <!-- Edit Controls -->
-      <div class="mt-4 space-y-3">
-        <!-- Brightness -->
-        <div>
-          <label class="text-xs font-medium text-gray-600">ปรับความสว่างภาพ</label>
-          <input type="range" id="brightnessSlider" min="50" max="150" value="100" class="w-full">
-        </div>
-
-        <!-- Crop Aspect Ratio -->
-        <div>
-          <label class="text-xs font-medium text-gray-600">อัตราส่วนภาพ (Crop)</label>
-          <div class="grid grid-cols-4 gap-2 mt-1">
-            <button onclick="setAspectRatio('original')" class="px-2 py-1 bg-gray-100 text-xs rounded border hover:bg-blue-50">Original</button>
-            <button onclick="setAspectRatio(1)" class="px-2 py-1 bg-gray-100 text-xs rounded border hover:bg-blue-50">1:1</button>
-            <button onclick="setAspectRatio(4/5)" class="px-2 py-1 bg-gray-100 text-xs rounded border hover:bg-blue-50">4:5</button>
-            <button onclick="setAspectRatio(16/9)" class="px-2 py-1 bg-gray-100 text-xs rounded border hover:bg-blue-50">16:9</button>
-          </div>
-        </div>
-
-        <!-- Logo Scale Controls -->
-        <div>
-          <label class="text-xs font-medium text-gray-600">ขนาดโลโก้</label>
-          <input type="range" id="logoScaleSlider" min="10" max="100" value="30" class="w-full">
-        </div>
-      </div>
-    </section>
-
-    <!-- Section 4: Export Settings -->
-    <section class="bg-white p-4 rounded-xl shadow space-y-3">
-      <h2 class="text-lg font-semibold">4. ส่งออกรูปภาพ</h2>
-      <div>
-        <label class="text-xs font-medium text-gray-600">ฟอร์แมตไฟล์</label>
-        <select id="exportFormat" class="w-full mt-1 p-2 border rounded bg-white">
-          <option value="image/png">PNG (โปร่งใส / คุณภาพสูงสุด)</option>
-          <option value="image/jpeg">JPEG (ไฟล์ขนาดเล็ก)</option>
-        </select>
-      </div>
-
-      <div id="jpegQualityGroup" class="hidden">
-        <label class="text-xs font-medium text-gray-600">คุณภาพไฟล์ JPEG (<span id="qualityVal">90</span>%)</label>
-        <input type="range" id="jpegQuality" min="10" max="100" value="90" class="w-full">
-      </div>
-
-      <button id="downloadBtn" class="w-full py-3 bg-green-600 text-white font-bold rounded-lg shadow hover:bg-green-700">
-        บันทึกภาพขนาดเต็ม (Full Resolution)
-      </button>
-    </section>
-
-  </main>
-
-  <script>
-    // App State
-    let uploadedLogos = [];
-    let selectedLogoIndex = -1;
-    let uploadedPhotos = [];
-    let currentPhotoIndex = 0;
-    
-    // Canvas & Layer State
-    const canvas = document.getElementById('mainCanvas');
-    const ctx = canvas.getContext('2d');
-    let currentAspect = 'original';
-    let brightness = 100;
-    
-    // Logo position & scale state
-    let logoState = { x: 50, y: 50, scale: 0.3 };
-    let isDragging = false;
-    let dragStart = { x: 0, y: 0 };
-
-    // --- 1. Logo Management ---
-    document.getElementById('logoInput').addEventListener('change', (e) => {
-      const files = Array.from(e.target.files);
-      files.forEach(file => {
-        const reader = new FileReader();
-        reader.onload = (event) => {
-          const img = new Image();
-          img.onload = () => {
-            uploadedLogos.push(img);
-            if (selectedLogoIndex === -1) selectedLogoIndex = 0;
-            renderLogoGallery();
-            renderCanvas();
-          };
-          img.src = event.target.result;
-        };
-        reader.readAsDataURL(file);
-      });
-    });
-
-    function renderLogoGallery() {
-      const gallery = document.getElementById('logoGallery');
-      const noLogoText = document.getElementById('noLogoText');
-      if (uploadedLogos.length > 0) noLogoText.style.display = 'none';
-
-      gallery.innerHTML = '';
-      uploadedLogos.forEach((logo, index) => {
-        const imgEl = document.createElement('img');
-        imgEl.src = logo.src;
-        imgEl.className = `h-12 w-12 object-contain border-2 rounded p-1 cursor-pointer ${index === selectedLogoIndex ? 'border-blue-500 bg-blue-50' : 'border-gray-200'}`;
-        imgEl.onclick = () => {
-          selectedLogoIndex = index;
-          renderLogoGallery();
-          renderCanvas();
-        };
-        gallery.appendChild(imgEl);
-      });
-    }
-
-    // --- 2. Photo Upload ---
-    document.getElementById('photoInput').addEventListener('change', (e) => {
-      const files = Array.from(e.target.files);
-      if (files.length > 30) {
-        alert('เลือกรูปภาพได้ไม่เกิน 30 รูป');
-        return;
-      }
-      uploadedPhotos = [];
-      document.getElementById('photoCount').innerText = files.length;
-      
-      let loadedCount = 0;
-      files.forEach((file, index) => {
-        const reader = new FileReader();
-        reader.onload = (event) => {
-          const img = new Image();
-          img.onload = () => {
-            uploadedPhotos[index] = img;
-            loadedCount++;
-            if (loadedCount === files.length) {
-              currentPhotoIndex = 0;
-              renderPhotoThumbnails();
-              renderCanvas();
-            }
-          };
-          img.src = event.target.result;
-        };
-        reader.readAsDataURL(file);
-      });
-    });
-
-    function renderPhotoThumbnails() {
-      const container = document.getElementById('photoThumbnails');
-      container.innerHTML = '';
-      uploadedPhotos.forEach((photo, idx) => {
-        const thumb = document.createElement('img');
-        thumb.src = photo.src;
-        thumb.className = `h-14 w-14 object-cover rounded cursor-pointer border-2 ${idx === currentPhotoIndex ? 'border-blue-600' : 'border-transparent'}`;
-        thumb.onclick = () => {
-          currentPhotoIndex = idx;
-          renderPhotoThumbnails();
-          renderCanvas();
-        };
-        container.appendChild(thumb);
-      });
-    }
-
-    // --- 3. Canvas Rendering & Controls ---
-    function setAspectRatio(ratio) {
-      currentAspect = ratio;
-      renderCanvas();
-    }
-
-    document.getElementById('brightnessSlider').addEventListener('input', (e) => {
-      brightness = e.target.value;
-      renderCanvas();
-    });
-
-    document.getElementById('logoScaleSlider').addEventListener('input', (e) => {
-      logoState.scale = e.target.value / 100;
-      renderCanvas();
-    });
-
-    function renderCanvas() {
-      if (uploadedPhotos.length === 0) return;
-      const baseImg = uploadedPhotos[currentPhotoIndex];
-
-      // Calculate Target Canvas Dimensions (Resolution Preservation)
-      let targetW = baseImg.naturalWidth;
-      let targetH = baseImg.naturalHeight;
-
-      if (currentAspect !== 'original') {
-        if (targetW / targetH > currentAspect) {
-          targetW = targetH * currentAspect;
-        } else {
-          targetH = targetW / currentAspect;
-        }
-      }
-
-      canvas.width = targetW;
-      canvas.height = targetH;
-
-      // Draw Main Photo with Brightness & Crop
-      ctx.filter = `brightness(${brightness}%)`;
-      const cropX = (baseImg.naturalWidth - targetW) / 2;
-      const cropY = (baseImg.naturalHeight - targetH) / 2;
-
-      ctx.drawImage(
-        baseImg,
-        cropX, cropY, targetW, targetH,
-        0, 0, targetW, targetH
-      );
-      ctx.filter = 'none';
-
-      // Draw Logo
-      if (selectedLogoIndex !== -1 && uploadedLogos[selectedLogoIndex]) {
-        const logo = uploadedLogos[selectedLogoIndex];
-        const lWidth = targetW * logoState.scale;
-        const lHeight = (logo.naturalHeight / logo.naturalWidth) * lWidth;
-
-        // Convert percentage position to pixels
-        const lx = (logoState.x / 100) * (targetW - lWidth);
-        const ly = (logoState.y / 100) * (targetH - lHeight);
-
-        ctx.drawImage(logo, lx, ly, lWidth, lHeight);
-      }
-    }
-
-    // --- 4. Touch & Drag Controls ---
-    function getPointerPos(e) {
-      const rect = canvas.getBoundingClientRect();
-      const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-      const clientY = e.touches ? e.touches[0].clientY : e.clientY;
-      return {
-        x: (clientX - rect.left) / rect.width * 100,
-        y: (clientY - rect.top) / rect.height * 100
-      };
-    }
-
-    canvas.addEventListener('mousedown', startDrag);
-    canvas.addEventListener('touchstart', startDrag);
-    window.addEventListener('mousemove', drag);
-    window.addEventListener('touchmove', drag);
-    window.addEventListener('mouseup', endDrag);
-    window.addEventListener('touchend', endDrag);
-
-    function startDrag(e) {
-      isDragging = true;
-      dragStart = getPointerPos(e);
-    }
-
-    function drag(e) {
-      if (!isDragging) return;
-      const currentPos = getPointerPos(e);
-      const dx = currentPos.x - dragStart.x;
-      const dy = currentPos.y - dragStart.y;
-
-      logoState.x = Math.max(0, Math.min(100, logoState.x + dx));
-      logoState.y = Math.max(0, Math.min(100, logoState.y + dy));
-
-      dragStart = currentPos;
-      renderCanvas();
-    }
-
-    function endDrag() {
-      isDragging = false;
-    }
-
-    // --- 5. Export ---
-    const exportFormatSelect = document.getElementById('exportFormat');
-    const jpegQualityGroup = document.getElementById('jpegQualityGroup');
-    const jpegQualityInput = document.getElementById('jpegQuality');
-
-    exportFormatSelect.addEventListener('change', (e) => {
-      jpegQualityGroup.classList.toggle('hidden', e.target.value !== 'image/jpeg');
-    });
-
-    jpegQualityInput.addEventListener('input', (e) => {
-      document.getElementById('qualityVal').innerText = e.target.value;
-    });
-
-    document.getElementById('downloadBtn').addEventListener('click', () => {
-      if (uploadedPhotos.length === 0) {
-        alert('กรุณาอัปโหลดรูปภาพก่อนส่งออก');
-        return;
-      }
-      
-      const format = exportFormatSelect.value;
-      const quality = format === 'image/jpeg' ? jpegQualityInput.value / 100 : 1.0;
-      
-      const dataUrl = canvas.toDataURL(format, quality);
-      const link = document.createElement('a');
-      const ext = format === 'image/png' ? 'png' : 'jpg';
-      link.download = `edited_photo_${Date.now()}.${ext}`;
-      link.href = dataUrl;
-      link.click();
-    });
   </script>
 </body>
 </html>
