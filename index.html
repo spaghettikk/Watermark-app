@@ -1,39 +1,613 @@
 <!DOCTYPE html>
-<html lang="th">
+<html lang="th" class="dark">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Batch Watermark App</title>
   <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+    }
+  </script>
   <style>
     canvas { touch-action: none; }
   </style>
 </head>
-<body class="bg-gray-100 text-gray-800 font-sans min-h-screen pb-10">
+<body class="bg-gray-100 dark:bg-gray-900 text-gray-800 dark:text-gray-100 font-sans min-h-screen pb-10 transition-colors">
 
   <!-- Header -->
-  <header class="bg-blue-600 text-white p-4 sticky top-0 z-50 shadow-md">
-    <h1 class="text-xl font-bold text-center">Batch Photo & Watermark Editor</h1>
+  <header class="bg-blue-600 dark:bg-gray-800 text-white p-4 sticky top-0 z-50 shadow-md flex justify-between items-center">
+    <h1 class="text-lg font-bold">Batch Photo & Watermark Editor</h1>
+    <!-- Theme Toggle Button -->
+    <button id="themeToggleBtn" class="p-2 bg-blue-700 dark:bg-gray-700 rounded-lg text-xs font-medium hover:opacity-90">
+      🌙 / ☀️
+    </button>
   </header>
 
   <main class="max-w-md mx-auto p-4 space-y-6">
 
-    <!-- Section 1: Logo Management -->
-    <section class="bg-white p-4 rounded-xl shadow">
+    <!-- Section 1: Logo Management (Persistent via LocalStorage) -->
+    <section class="bg-white dark:bg-gray-800 p-4 rounded-xl shadow transition-colors">
       <h2 class="text-lg font-semibold mb-3 flex items-center justify-between">
         <span>1. จัดการคลังโลโก้</span>
-        <label class="text-sm bg-blue-50 text-blue-600 font-normal px-2 py-1 rounded border border-blue-200 cursor-pointer">
-          + เพิ่มโลโก้
+        <label class="text-sm bg-blue-50 dark:bg-blue-900/50 text-blue-600 dark:text-blue-300 font-normal px-2 py-1 rounded border border-blue-200 dark:border-blue-700 cursor-pointer">
+          + เพิ่มโลโก้เข้าคลัง
           <input type="file" id="logoInput" accept="image/*" multiple class="hidden">
         </label>
       </h2>
-      <div id="logoGallery" class="flex gap-2 overflow-x-auto py-2 min-h-[64px] border border-dashed rounded p-2">
+      <div id="logoGallery" class="flex gap-2 overflow-x-auto py-2 min-h-[64px] border border-dashed dark:border-gray-700 rounded p-2">
         <span class="text-xs text-gray-400 m-auto" id="noLogoText">ยังไม่มีโลโก้ในระบบ</span>
       </div>
+      <p class="text-[10px] text-gray-400 mt-1">* โลโก้จะถูกบันทึกไว้ในเครื่อง เปิดใช้งานครั้งหน้าไม่ต้องอัปโหลดใหม่</p>
     </section>
 
     <!-- Section 2: Upload Photos (Max 30) -->
-    <section class="bg-white p-4 rounded-xl shadow">
+    <section class="bg-white dark:bg-gray-800 p-4 rounded-xl shadow transition-colors">
+      <h2 class="text-lg font-semibold mb-2">2. อัปโหลดรูปภาพ (สูงสุด 30 รูป)</h2>
+      <input type="file" id="photoInput" accept="image/*" multiple class="hidden">
+      <button onclick="document.getElementById('photoInput').click()" class="w-full py-3 bg-gray-50 dark:bg-gray-700 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg text-gray-600 dark:text-gray-200 font-medium hover:bg-gray-100">
+        เลือกรูปภาพ (<span id="photoCount">0</span>/30)
+      </button>
+      <div id="photoThumbnails" class="flex gap-2 overflow-x-auto mt-3"></div>
+    </section>
+
+    <!-- Section 3: Editor Canvas -->
+    <section class="bg-white dark:bg-gray-800 p-4 rounded-xl shadow relative transition-colors">
+      <h2 class="text-lg font-semibold mb-2">3. ปรับแต่งภาพและจัดวางโลโก้</h2>
+      <div class="relative w-full aspect-square bg-gray-200 dark:bg-gray-900 rounded overflow-hidden flex items-center justify-center">
+        <canvas id="mainCanvas" class="max-w-full max-h-full border border-gray-300 dark:border-gray-700"></canvas>
+      </div>
+      <p class="text-xs text-gray-500 dark:text-gray-400 mt-1 text-center">แตะเลือกลิสต์โลโก้ด้านล่างเพื่อลากจัดตำแหน่ง</p>
+
+      <!-- Multi-Logo Controls -->
+      <div class="mt-4 p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg space-y-3">
+        <div class="flex justify-between items-center">
+          <span class="text-sm font-semibold">โลโก้บนภาพ (<span id="placedLogoCount">0</span>)</span>
+          <button id="addLogoToCanvasBtn" class="text-xs bg-green-600 hover:bg-green-700 text-white px-2 py-1 rounded">
+            + วาง Logo เพิ่ม
+          </button>
+        </div>
+        <div id="placedLogoList" class="flex gap-2 overflow-x-auto py-1"></div>
+      </div>
+
+      <!-- Active Logo Controls -->
+      <div id="activeLogoControls" class="mt-3 space-y-3 p-3 border rounded border-gray-200 dark:border-gray-700">
+        <div class="flex justify-between items-center">
+          <span class="text-xs font-bold text-blue-600 dark:text-blue-400">ปรับแต่งโลโก้ที่เลือก</span>
+          <button onclick="removeActiveLogo()" class="text-[10px] bg-red-500 text-white px-2 py-0.5 rounded">ลบโลโก้นี้</button>
+        </div>
+
+        <!-- Scale -->
+        <div>
+          <label class="text-xs font-medium text-gray-600 dark:text-gray-300">ขนาดโลโก้</label>
+          <input type="range" id="logoScaleSlider" min="5" max="100" value="30" class="w-full">
+        </div>
+
+        <!-- Opacity -->
+        <div>
+          <label class="text-xs font-medium text-gray-600 dark:text-gray-300">ความโปร่งแสง (<span id="opacityVal">100</span>%)</label>
+          <input type="range" id="logoOpacitySlider" min="0" max="100" value="100" class="w-full">
+        </div>
+
+        <!-- Border / Shadow Effect -->
+        <div>
+          <label class="text-xs font-medium text-gray-600 dark:text-gray-300">เอฟเฟกต์ขอบ / เงา</label>
+          <select id="logoEffectSelect" class="w-full mt-1 p-1.5 text-xs border rounded bg-white dark:bg-gray-700 dark:border-gray-600">
+            <option value="none">ไม่มีเอฟเฟกต์ (None)</option>
+            <option value="shadow">เงาพื้นหลัง (Drop Shadow)</option>
+            <option value="white-glow">เรืองแสงสีขาว (White Glow)</option>
+            <option value="black-glow">เรืองแสงสีดำ (Black Glow)</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Image Controls -->
+      <div class="mt-4 space-y-3 pt-3 border-t dark:border-gray-700">
+        <!-- Brightness -->
+        <div>
+          <label class="text-xs font-medium text-gray-600 dark:text-gray-300">ปรับความสว่างภาพหลัก</label>
+          <input type="range" id="brightnessSlider" min="50" max="150" value="100" class="w-full">
+        </div>
+
+        <!-- Crop Aspect Ratio -->
+        <div>
+          <label class="text-xs font-medium text-gray-600 dark:text-gray-300">อัตราส่วนภาพ (Crop)</label>
+          <div class="grid grid-cols-4 gap-2 mt-1">
+            <button onclick="setAspectRatio('original')" class="px-2 py-1 bg-gray-100 dark:bg-gray-700 text-xs rounded border dark:border-gray-600">Original</button>
+            <button onclick="setAspectRatio(1)" class="px-2 py-1 bg-gray-100 dark:bg-gray-700 text-xs rounded border dark:border-gray-600">1:1</button>
+            <button onclick="setAspectRatio(4/5)" class="px-2 py-1 bg-gray-100 dark:bg-gray-700 text-xs rounded border dark:border-gray-600">4:5</button>
+            <button onclick="setAspectRatio(16/9)" class="px-2 py-1 bg-gray-100 dark:bg-gray-700 text-xs rounded border dark:border-gray-600">16:9</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Section 4: Export Settings & File Size Preview -->
+    <section class="bg-white dark:bg-gray-800 p-4 rounded-xl shadow space-y-3 transition-colors">
+      <h2 class="text-lg font-semibold">4. ส่งออกรูปภาพ</h2>
+      <div>
+        <label class="text-xs font-medium text-gray-600 dark:text-gray-300">ฟอร์แมตไฟล์</label>
+        <select id="exportFormat" class="w-full mt-1 p-2 border rounded bg-white dark:bg-gray-700 dark:border-gray-600">
+          <option value="image/png">PNG (โปร่งใส / คุณภาพสูงสุด)</option>
+          <option value="image/jpeg">JPEG (ปรับขนาดและความละเอียดได้)</option>
+        </select>
+      </div>
+
+      <!-- JPEG Options -->
+      <div id="jpegSettingsGroup" class="hidden space-y-3">
+        <div>
+          <label class="text-xs font-medium text-gray-600 dark:text-gray-300">ความละเอียดภาพ (Resolution)</label>
+          <select id="jpegResolution" class="w-full mt-1 p-2 border rounded bg-white dark:bg-gray-700 dark:border-gray-600">
+            <option value="1.0">สูง (High - 100% ขนาดต้นฉบับ)</option>
+            <option value="0.7">กลาง (Medium - 70% ขนาดต้นฉบับ)</option>
+            <option value="0.5">ต่ำ (Low - 50% ขนาดต้นฉบับ)</option>
+          </select>
+        </div>
+
+        <div>
+          <label class="text-xs font-medium text-gray-600 dark:text-gray-300">คุณภาพไฟล์ JPEG (<span id="qualityVal">90</span>%)</label>
+          <input type="range" id="jpegQuality" min="10" max="100" value="90" class="w-full">
+        </div>
+      </div>
+
+      <!-- Real-time File Size Preview -->
+      <div class="p-3 bg-blue-50 dark:bg-blue-950/40 rounded-lg flex justify-between items-center text-xs">
+        <span class="font-medium text-blue-800 dark:text-blue-200">ประเมินขนาดไฟล์ส่งออก:</span>
+        <span id="fileSizeEst" class="font-bold text-blue-600 dark:text-blue-400">0 KB</span>
+      </div>
+
+      <button id="downloadBtn" class="w-full py-3 bg-green-600 hover:bg-green-700 text-white font-bold rounded-lg shadow">
+        บันทึกภาพ
+      </button>
+    </section>
+
+  </main>
+
+  <script>
+    // Global State
+    let storedLogos = []; // Base64 stored logos
+    let loadedLogoImgs = []; // Image Objects
+    let selectedStorageLogoIndex = -1;
+    let uploadedPhotos = [];
+    let currentPhotoIndex = 0;
+
+    // Canvas Multi-Logo Layer State
+    let canvasLogos = []; // { imgIndex, x, y, scale, opacity, effect }
+    let activeCanvasLogoIndex = -1;
+
+    const canvas = document.getElementById('mainCanvas');
+    const ctx = canvas.getContext('2d');
+    let currentAspect = 'original';
+    let brightness = 100;
+    let isDragging = false;
+    let dragStart = { x: 0, y: 0 };
+
+    // --- Theme Control ---
+    const themeToggleBtn = document.getElementById('themeToggleBtn');
+    themeToggleBtn.addEventListener('click', () => {
+      document.documentElement.classList.toggle('dark');
+    });
+
+    // --- LocalStorage Logo Persistence ---
+    function loadLogosFromStorage() {
+      const saved = localStorage.getItem('app_saved_logos');
+      if (saved) {
+        storedLogos = JSON.parse(saved);
+        let loadedCount = 0;
+        loadedLogoImgs = [];
+        storedLogos.forEach((src, idx) => {
+          const img = new Image();
+          img.onload = () => {
+            loadedLogoImgs[idx] = img;
+            loadedCount++;
+            if (loadedCount === storedLogos.length) {
+              if (selectedStorageLogoIndex === -1 && loadedLogoImgs.length > 0) {
+                selectedStorageLogoIndex = 0;
+              }
+              renderLogoGallery();
+            }
+          };
+          img.src = src;
+        });
+      }
+    }
+
+    function saveLogosToStorage() {
+      localStorage.setItem('app_saved_logos', JSON.stringify(storedLogos));
+    }
+
+    document.getElementById('logoInput').addEventListener('change', (e) => {
+      const files = Array.from(e.target.files);
+      files.forEach(file => {
+        const reader = new FileReader();
+        reader.onload = (event) => {
+          const base64 = event.target.result;
+          storedLogos.push(base64);
+          saveLogosToStorage();
+          
+          const img = new Image();
+          img.onload = () => {
+            loadedLogoImgs.push(img);
+            selectedStorageLogoIndex = loadedLogoImgs.length - 1;
+            renderLogoGallery();
+          };
+          img.src = base64;
+        };
+        reader.readAsDataURL(file);
+      });
+    });
+
+    function renderLogoGallery() {
+      const gallery = document.getElementById('logoGallery');
+      const noLogoText = document.getElementById('noLogoText');
+      if (loadedLogoImgs.length > 0) noLogoText.style.display = 'none';
+
+      gallery.innerHTML = '';
+      loadedLogoImgs.forEach((logo, index) => {
+        const container = document.createElement('div');
+        container.className = 'relative flex-shrink-0';
+        
+        const imgEl = document.createElement('img');
+        imgEl.src = logo.src;
+        imgEl.className = `h-12 w-12 object-contain border-2 rounded p-1 cursor-pointer ${index === selectedStorageLogoIndex ? 'border-blue-500 bg-blue-50 dark:bg-gray-700' : 'border-gray-200 dark:border-gray-600'}`;
+        imgEl.onclick = () => {
+          selectedStorageLogoIndex = index;
+          renderLogoGallery();
+        };
+
+        const delBtn = document.createElement('button');
+        delBtn.innerHTML = '×';
+        delBtn.className = 'absolute -top-1 -right-1 bg-red-500 text-white rounded-full w-4 h-4 text-xs flex items-center justify-center';
+        delBtn.onclick = (e) => {
+          e.stopPropagation();
+          deleteLogoFromStorage(index);
+        };
+
+        container.appendChild(imgEl);
+        container.appendChild(delBtn);
+        gallery.appendChild(container);
+      });
+    }
+
+    function deleteLogoFromStorage(index) {
+      storedLogos.splice(index, 1);
+      loadedLogoImgs.splice(index, 1);
+      saveLogosToStorage();
+      selectedStorageLogoIndex = loadedLogoImgs.length > 0 ? 0 : -1;
+      renderLogoGallery();
+    }
+
+    // --- Photo Upload ---
+    document.getElementById('photoInput').addEventListener('change', (e) => {
+      const files = Array.from(e.target.files);
+      if (files.length > 30) {
+        alert('เลือกรูปภาพได้ไม่เกิน 30 รูป');
+        return;
+      }
+      uploadedPhotos = [];
+      document.getElementById('photoCount').innerText = files.length;
+      
+      let loadedCount = 0;
+      files.forEach((file, index) => {
+        const reader = new FileReader();
+        reader.onload = (event) => {
+          const img = new Image();
+          img.onload = () => {
+            uploadedPhotos[index] = img;
+            loadedCount++;
+            if (loadedCount === files.length) {
+              currentPhotoIndex = 0;
+              renderPhotoThumbnails();
+              renderCanvas();
+            }
+          };
+          img.src = event.target.result;
+        };
+        reader.readAsDataURL(file);
+      });
+    });
+
+    function renderPhotoThumbnails() {
+      const container = document.getElementById('photoThumbnails');
+      container.innerHTML = '';
+      uploadedPhotos.forEach((photo, idx) => {
+        const thumb = document.createElement('img');
+        thumb.src = photo.src;
+        thumb.className = `h-14 w-14 object-cover rounded cursor-pointer border-2 ${idx === currentPhotoIndex ? 'border-blue-600' : 'border-transparent'}`;
+        thumb.onclick = () => {
+          currentPhotoIndex = idx;
+          renderPhotoThumbnails();
+          renderCanvas();
+        };
+        container.appendChild(thumb);
+      });
+    }
+
+    // --- Multi-Logo Canvas Placement ---
+    document.getElementById('addLogoToCanvasBtn').addEventListener('click', () => {
+      if (selectedStorageLogoIndex === -1 || !loadedLogoImgs[selectedStorageLogoIndex]) {
+        alert('กรุณาเลือกหรืออัปโหลดโลโก้เข้าคลังก่อน');
+        return;
+      }
+      canvasLogos.push({
+        imgIndex: selectedStorageLogoIndex,
+        x: 40 + (canvasLogos.length * 5),
+        y: 40 + (canvasLogos.length * 5),
+        scale: 0.3,
+        opacity: 1.0,
+        effect: 'none'
+      });
+      activeCanvasLogoIndex = canvasLogos.length - 1;
+      renderPlacedLogoList();
+      renderCanvas();
+    });
+
+    function renderPlacedLogoList() {
+      const container = document.getElementById('placedLogoList');
+      document.getElementById('placedLogoCount').innerText = canvasLogos.length;
+      container.innerHTML = '';
+
+      canvasLogos.forEach((item, idx) => {
+        const logoImg = loadedLogoImgs[item.imgIndex];
+        if (!logoImg) return;
+        const btn = document.createElement('button');
+        btn.className = `px-2 py-1 text-xs rounded border flex items-center gap-1 ${idx === activeCanvasLogoIndex ? 'bg-blue-600 text-white border-blue-600' : 'bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600'}`;
+        btn.innerText = `Logo #${idx + 1}`;
+        btn.onclick = () => {
+          activeCanvasLogoIndex = idx;
+          syncControlsWithActiveLogo();
+          renderPlacedLogoList();
+          renderCanvas();
+        };
+        container.appendChild(btn);
+      });
+
+      syncControlsWithActiveLogo();
+    }
+
+    function syncControlsWithActiveLogo() {
+      const controls = document.getElementById('activeLogoControls');
+      if (activeCanvasLogoIndex === -1 || !canvasLogos[activeCanvasLogoIndex]) {
+        controls.style.display = 'none';
+        return;
+      }
+      controls.style.display = 'block';
+      const logo = canvasLogos[activeCanvasLogoIndex];
+      document.getElementById('logoScaleSlider').value = logo.scale * 100;
+      document.getElementById('logoOpacitySlider').value = logo.opacity * 100;
+      document.getElementById('opacityVal').innerText = Math.round(logo.opacity * 100);
+      document.getElementById('logoEffectSelect').value = logo.effect;
+    }
+
+    function removeActiveLogo() {
+      if (activeCanvasLogoIndex !== -1) {
+        canvasLogos.splice(activeCanvasLogoIndex, 1);
+        activeCanvasLogoIndex = canvasLogos.length > 0 ? canvasLogos.length - 1 : -1;
+        renderPlacedLogoList();
+        renderCanvas();
+      }
+    }
+
+    // --- Controls Listener ---
+    document.getElementById('logoScaleSlider').addEventListener('input', (e) => {
+      if (activeCanvasLogoIndex !== -1) {
+        canvasLogos[activeCanvasLogoIndex].scale = e.target.value / 100;
+        renderCanvas();
+      }
+    });
+
+    document.getElementById('logoOpacitySlider').addEventListener('input', (e) => {
+      if (activeCanvasLogoIndex !== -1) {
+        const val = e.target.value / 100;
+        canvasLogos[activeCanvasLogoIndex].opacity = val;
+        document.getElementById('opacityVal').innerText = e.target.value;
+        renderCanvas();
+      }
+    });
+
+    document.getElementById('logoEffectSelect').addEventListener('change', (e) => {
+      if (activeCanvasLogoIndex !== -1) {
+        canvasLogos[activeCanvasLogoIndex].effect = e.target.value;
+        renderCanvas();
+      }
+    });
+
+    document.getElementById('brightnessSlider').addEventListener('input', (e) => {
+      brightness = e.target.value;
+      renderCanvas();
+    });
+
+    function setAspectRatio(ratio) {
+      currentAspect = ratio;
+      renderCanvas();
+    }
+
+    // --- Render Canvas ---
+    function renderCanvas() {
+      if (uploadedPhotos.length === 0) return;
+      const baseImg = uploadedPhotos[currentPhotoIndex];
+
+      let targetW = baseImg.naturalWidth;
+      let targetH = baseImg.naturalHeight;
+
+      if (currentAspect !== 'original') {
+        if (targetW / targetH > currentAspect) {
+          targetW = targetH * currentAspect;
+        } else {
+          targetH = targetW / currentAspect;
+        }
+      }
+
+      canvas.width = targetW;
+      canvas.height = targetH;
+
+      // Draw Main Photo
+      ctx.filter = `brightness(${brightness}%)`;
+      const cropX = (baseImg.naturalWidth - targetW) / 2;
+      const cropY = (baseImg.naturalHeight - targetH) / 2;
+
+      ctx.drawImage(baseImg, cropX, cropY, targetW, targetH, 0, 0, targetW, targetH);
+      ctx.filter = 'none';
+
+      // Draw Placed Logos
+      canvasLogos.forEach((item, idx) => {
+        const logoImg = loadedLogoImgs[item.imgIndex];
+        if (!logoImg) return;
+
+        const lWidth = targetW * item.scale;
+        const lHeight = (logoImg.naturalHeight / logoImg.naturalWidth) * lWidth;
+        const lx = (item.x / 100) * (targetW - lWidth);
+        const ly = (item.y / 100) * (targetH - lHeight);
+
+        ctx.save();
+        ctx.globalAlpha = item.opacity;
+
+        // Apply Border Effect
+        if (item.effect === 'shadow') {
+          ctx.shadowColor = 'rgba(0, 0, 0, 0.6)';
+          ctx.shadowBlur = 12;
+          ctx.shadowOffsetX = 4;
+          ctx.shadowOffsetY = 4;
+        } else if (item.effect === 'white-glow') {
+          ctx.shadowColor = 'white';
+          ctx.shadowBlur = 15;
+        } else if (item.effect === 'black-glow') {
+          ctx.shadowColor = 'black';
+          ctx.shadowBlur = 15;
+        }
+
+        ctx.drawImage(logoImg, lx, ly, lWidth, lHeight);
+        ctx.restore();
+
+        // Active Selection Box
+        if (idx === activeCanvasLogoIndex) {
+          ctx.strokeStyle = '#2563eb';
+          ctx.lineWidth = Math.max(2, targetW * 0.003);
+          ctx.strokeRect(lx, ly, lWidth, lHeight);
+        }
+      });
+
+      updateFileSizeEstimate();
+    }
+
+    // --- Touch Dragging ---
+    function getPointerPos(e) {
+      const rect = canvas.getBoundingClientRect();
+      const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+      const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+      return {
+        x: (clientX - rect.left) / rect.width * 100,
+        y: (clientY - rect.top) / rect.height * 100
+      };
+    }
+
+    canvas.addEventListener('mousedown', startDrag);
+    canvas.addEventListener('touchstart', startDrag);
+    window.addEventListener('mousemove', drag);
+    window.addEventListener('touchmove', drag);
+    window.addEventListener('mouseup', endDrag);
+    window.addEventListener('touchend', endDrag);
+
+    function startDrag(e) {
+      if (activeCanvasLogoIndex === -1) return;
+      isDragging = true;
+      dragStart = getPointerPos(e);
+    }
+
+    function drag(e) {
+      if (!isDragging || activeCanvasLogoIndex === -1) return;
+      const currentPos = getPointerPos(e);
+      const dx = currentPos.x - dragStart.x;
+      const dy = currentPos.y - dragStart.y;
+
+      const item = canvasLogos[activeCanvasLogoIndex];
+      item.x = Math.max(0, Math.min(100, item.x + dx));
+      item.y = Math.max(0, Math.min(100, item.y + dy));
+
+      dragStart = currentPos;
+      renderCanvas();
+    }
+
+    function endDrag() { isDragging = false; }
+
+    // --- Export & File Size Estimation ---
+    const exportFormatSelect = document.getElementById('exportFormat');
+    const jpegSettingsGroup = document.getElementById('jpegSettingsGroup');
+    const jpegQualityInput = document.getElementById('jpegQuality');
+    const jpegResolutionSelect = document.getElementById('jpegResolution');
+
+    exportFormatSelect.addEventListener('change', (e) => {
+      jpegSettingsGroup.classList.toggle('hidden', e.target.value !== 'image/jpeg');
+      renderCanvas();
+    });
+
+    jpegQualityInput.addEventListener('input', (e) => {
+      document.getElementById('qualityVal').innerText = e.target.value;
+      renderCanvas();
+    });
+
+    jpegResolutionSelect.addEventListener('change', () => { renderCanvas(); });
+
+    function getExportCanvas() {
+      const format = exportFormatSelect.value;
+      let finalCanvas = canvas;
+
+      if (format === 'image/jpeg') {
+        const scale = parseFloat(jpegResolutionSelect.value);
+        if (scale !== 1.0) {
+          const scaledCanvas = document.createElement('canvas');
+          scaledCanvas.width = canvas.width * scale;
+          scaledCanvas.height = canvas.height * scale;
+          const sCtx = scaledCanvas.getContext('2d');
+          sCtx.drawImage(canvas, 0, 0, scaledCanvas.width, scaledCanvas.height);
+          finalCanvas = scaledCanvas;
+        }
+      }
+      return finalCanvas;
+    }
+
+    function updateFileSizeEstimate() {
+      if (uploadedPhotos.length === 0) return;
+      const format = exportFormatSelect.value;
+      const quality = format === 'image/jpeg' ? jpegQualityInput.value / 100 : 1.0;
+      const targetCanvas = getExportCanvas();
+
+      const dataUrl = targetCanvas.toDataURL(format, quality);
+      const head = `data:${format};base64,`;
+      const sizeInBytes = Math.round((dataUrl.length - head.length) * 3 / 4);
+
+      let sizeStr = '';
+      if (sizeInBytes >= 1024 * 1024) {
+        sizeStr = (sizeInBytes / (1024 * 1024)).toFixed(2) + ' MB';
+      } else {
+        sizeStr = (sizeInBytes / 1024).toFixed(1) + ' KB';
+      }
+      document.getElementById('fileSizeEst').innerText = sizeStr;
+    }
+
+    document.getElementById('downloadBtn').addEventListener('click', () => {
+      if (uploadedPhotos.length === 0) {
+        alert('กรุณาอัปโหลดรูปภาพก่อนส่งออก');
+        return;
+      }
+      const format = exportFormatSelect.value;
+      const quality = format === 'image/jpeg' ? jpegQualityInput.value / 100 : 1.0;
+      const targetCanvas = getExportCanvas();
+
+      const dataUrl = targetCanvas.toDataURL(format, quality);
+      const link = document.createElement('a');
+      const ext = format === 'image/png' ? 'png' : 'jpg';
+      link.download = `edited_photo_${Date.now()}.${ext}`;
+      link.href = dataUrl;
+      link.click();
+    });
+
+    // Init App
+    loadLogosFromStorage();
+  </script>
+</body>
+</html>
       <h2 class="text-lg font-semibold mb-2">2. อัปโหลดรูปภาพ (สูงสุด 30 รูป)</h2>
       <input type="file" id="photoInput" accept="image/*" multiple class="hidden">
       <button onclick="document.getElementById('photoInput').click()" class="w-full py-3 bg-gray-50 border-2 border-dashed border-gray-300 rounded-lg text-gray-600 font-medium hover:bg-gray-100">
