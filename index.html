@@ -54,7 +54,6 @@
         <span class="text-xs font-bold">เลือกรูปภาพ (<span id="photoCount">0</span>/30)</span>
       </button>
 
-      <!-- Status Bar สำหรับแจ้งเตือนสถานะการโหลด -->
       <div id="uploadStatus" class="hidden mt-2 p-2 text-center text-xs rounded bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300">
         กำลังประมวลผลรูปภาพ...
       </div>
@@ -147,12 +146,12 @@
         </div>
       </div>
 
-      <!-- Tiling Engine -->
+      <!-- Tiling Engine (แก้ไข: แยกเป็นอิสระ กำหนดข้อความหรืออัปโหลดภาพเองได้) -->
       <div class="mt-4 p-3 bg-blue-50/50 dark:bg-blue-950/30 rounded-lg space-y-3 border border-blue-200 dark:border-blue-900">
         <div class="flex justify-between items-center">
           <div>
             <span class="text-xs font-bold text-blue-900 dark:text-blue-300">โหมดลายน้ำกระจายเต็มรูป (Tiled Watermark Pattern)</span>
-            <p class="text-[10px] text-gray-500">ปูพรมโลโก้เต็มพื้นที่รูปภาพเพื่อป้องกันการก๊อปปี้</p>
+            <p class="text-[10px] text-gray-500">ใส่ข้อความหรือรูปภาพเพื่อปูพรมเต็มรูปภาพ</p>
           </div>
           <label class="inline-flex items-center cursor-pointer">
             <input type="checkbox" id="tilingEnableToggle" class="sr-only peer">
@@ -160,14 +159,52 @@
           </label>
         </div>
 
-        <div id="tilingControlsGroup" class="hidden space-y-2 pt-2 border-t border-blue-200 dark:border-blue-900">
-          <div class="grid grid-cols-3 gap-2">
+        <div id="tilingControlsGroup" class="hidden space-y-3 pt-2 border-t border-blue-200 dark:border-blue-900">
+          <div>
+            <label class="text-[11px] font-medium text-gray-700 dark:text-gray-300">ประเภทลายน้ำ:</label>
+            <div class="flex gap-4 mt-1 text-xs">
+              <label class="inline-flex items-center gap-1 cursor-pointer">
+                <input type="radio" name="tilingType" value="text" checked class="text-blue-600">
+                <span>ข้อความ (Text)</span>
+              </label>
+              <label class="inline-flex items-center gap-1 cursor-pointer">
+                <input type="radio" name="tilingType" value="image" class="text-blue-600">
+                <span>รูปภาพ (Image)</span>
+              </label>
+            </div>
+          </div>
+
+          <!-- โหมดข้อความ -->
+          <div id="tilingTextOptions" class="space-y-2">
+            <input type="text" id="tilingTextInput" value="FilmmyE22NCB" placeholder="พิมพ์ข้อความลายน้ำ" class="w-full p-1.5 text-xs border rounded bg-white dark:bg-gray-800 dark:border-gray-600">
+            <div class="grid grid-cols-2 gap-2">
+              <div>
+                <label class="text-[10px] text-gray-500">ขนาดฟอนต์</label>
+                <input type="range" id="tilingTextSizeSlider" min="10" max="80" value="28" class="w-full">
+              </div>
+              <div>
+                <label class="text-[10px] text-gray-500">สีข้อความ</label>
+                <input type="color" id="tilingTextColorPicker" value="#ffffff" class="w-full h-6 p-0 border rounded cursor-pointer">
+              </div>
+            </div>
+          </div>
+
+          <!-- โหมดรูปภาพ -->
+          <div id="tilingImageOptions" class="hidden space-y-2">
+            <label class="block text-xs bg-white dark:bg-gray-800 p-2 rounded border border-dashed text-center cursor-pointer">
+              <span class="text-blue-600 dark:text-blue-400 font-medium">+ อัปโหลดภาพลายน้ำ</span>
+              <input type="file" id="tilingImageInput" accept="image/*" class="hidden">
+            </label>
+            <div id="tilingImagePreview" class="text-[10px] text-gray-500 text-center">ยังไม่ได้เลือกภาพลายน้ำ</div>
+          </div>
+
+          <div class="grid grid-cols-3 gap-2 pt-1 border-t dark:border-gray-700">
             <div>
-              <label class="text-[10px] text-gray-500">ความจาง Tiled</label>
+              <label class="text-[10px] text-gray-500">ความจาง</label>
               <input type="range" id="tilingOpacitySlider" min="5" max="100" value="25" class="w-full">
             </div>
             <div>
-              <label class="text-[10px] text-gray-500">ระยะห่างกริ๊ด (Gap)</label>
+              <label class="text-[10px] text-gray-500">ระยะห่าง (Gap)</label>
               <input type="range" id="tilingGapSlider" min="50" max="300" value="120" class="w-full">
             </div>
             <div>
@@ -263,8 +300,14 @@
     let textItems = [];
     let activeTextIndex = -1;
 
+    // Tiling State ปรับปรุงใหม่
     let tilingState = {
       enabled: false,
+      type: 'text', // 'text' หรือ 'image'
+      text: 'FilmmyE22NCB',
+      textSize: 28,
+      textColor: '#ffffff',
+      img: null,
       opacity: 0.25,
       gap: 120,
       rotate: -20
@@ -369,7 +412,6 @@
       renderLogoGallery();
     }
 
-    // ระบบประมวลผลการรับรูปภาพใหม่สำหรับสมาร์ทโฟนแบบเสถียร 100%
     document.getElementById('photoInput').addEventListener('change', async (e) => {
       const files = Array.from(e.target.files);
       if (files.length === 0) return;
@@ -391,7 +433,6 @@
           const url = URL.createObjectURL(file);
 
           img.onload = () => {
-            // สร้าง Offscreen Canvas เพื่อให้มั่นใจว่าข้อมูลพิกเซลสมบูรณ์
             const tempCanvas = document.createElement('canvas');
             tempCanvas.width = img.naturalWidth || img.width;
             tempCanvas.height = img.naturalHeight || img.height;
@@ -520,23 +561,73 @@
     }
 
     function setLogoPosPreset(preset) {
-      if (activeCanvasLogoIndex === -1) return;
-      const logo = canvasLogos[activeCanvasLogoIndex];
-      if (preset === 'tl') { logo.x = 2; logo.y = 2; }
-      else if (preset === 'tr') { logo.x = 98; logo.y = 2; }
-      else if (preset === 'bl') { logo.x = 2; logo.y = 98; }
-      else if (preset === 'br') { logo.x = 98; logo.y = 98; }
-      else if (preset === 'center') { logo.x = 50; logo.y = 50; }
-      renderCanvas();
+      if (activeCanvasLogoIndex !== -1) {
+        const logo = canvasLogos[activeCanvasLogoIndex];
+        if (preset === 'tl') { logo.x = 2; logo.y = 2; }
+        else if (preset === 'tr') { logo.x = 98; logo.y = 2; }
+        else if (preset === 'bl') { logo.x = 2; logo.y = 98; }
+        else if (preset === 'br') { logo.x = 98; logo.y = 98; }
+        else if (preset === 'center') { logo.x = 50; logo.y = 50; }
+        renderCanvas();
+      }
     }
 
+    // Tiling Control Listeners
     const tilingEnableToggle = document.getElementById('tilingEnableToggle');
     const tilingControlsGroup = document.getElementById('tilingControlsGroup');
-    
+    const tilingTextOptions = document.getElementById('tilingTextOptions');
+    const tilingImageOptions = document.getElementById('tilingImageOptions');
+
     tilingEnableToggle.addEventListener('change', (e) => {
       tilingState.enabled = e.target.checked;
       tilingControlsGroup.classList.toggle('hidden', !tilingState.enabled);
       renderCanvas();
+    });
+
+    document.querySelectorAll('input[name="tilingType"]').forEach(radio => {
+      radio.addEventListener('change', (e) => {
+        tilingState.type = e.target.value;
+        if (tilingState.type === 'text') {
+          tilingTextOptions.classList.remove('hidden');
+          tilingImageOptions.classList.add('hidden');
+        } else {
+          tilingTextOptions.classList.add('hidden');
+          tilingImageOptions.classList.remove('hidden');
+        }
+        renderCanvas();
+      });
+    });
+
+    document.getElementById('tilingTextInput').addEventListener('input', (e) => {
+      tilingState.text = e.target.value;
+      renderCanvas();
+    });
+
+    document.getElementById('tilingTextSizeSlider').addEventListener('input', (e) => {
+      tilingState.textSize = parseInt(e.target.value);
+      renderCanvas();
+    });
+
+    document.getElementById('tilingTextColorPicker').addEventListener('input', (e) => {
+      tilingState.textColor = e.target.value;
+      renderCanvas();
+    });
+
+    document.getElementById('tilingImageInput').addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = (event) => {
+          const img = new Image();
+          img.onload = () => {
+            tilingState.img = img;
+            document.getElementById('tilingImagePreview').innerText = `อัปโหลดเรียบร้อย: ${file.name}`;
+            renderCanvas();
+          };
+          img.src = event.target.result;
+        };
+        reader.readAsDataURL(file);
+      }
     });
 
     document.getElementById('tilingOpacitySlider').addEventListener('input', (e) => {
@@ -693,33 +784,54 @@
       tempCanvas.height = targetH;
       const tempCtx = tempCanvas.getContext('2d');
 
+      // 1. วาดรูปหลัก
       tempCtx.filter = `brightness(${brightness}%)`;
       const cropX = ((baseImg.naturalWidth || baseImg.width) - targetW) / 2;
       const cropY = ((baseImg.naturalHeight || baseImg.height) - targetH) / 2;
       tempCtx.drawImage(baseImg, cropX, cropY, targetW, targetH, 0, 0, targetW, targetH);
       tempCtx.filter = 'none';
 
-      if (tilingState.enabled && selectedStorageLogoIndex !== -1 && loadedLogoImgs[selectedStorageLogoIndex]) {
-        const tileImg = loadedLogoImgs[selectedStorageLogoIndex];
-        const tScale = 0.15;
-        const tw = targetW * tScale;
-        const th = (tileImg.naturalHeight / tileImg.naturalWidth) * tw;
-        const gap = (tilingState.gap / 100) * tw;
-
+      // 2. วาดโหมดลายน้ำกระจายเต็มรูป (Tiled Pattern)
+      if (tilingState.enabled) {
         tempCtx.save();
         tempCtx.globalAlpha = tilingState.opacity;
         tempCtx.translate(targetW / 2, targetH / 2);
         tempCtx.rotate((tilingState.rotate * Math.PI) / 180);
         tempCtx.translate(-targetW / 2, -targetH / 2);
 
-        for (let x = -targetW; x < targetW * 2; x += tw + gap) {
-          for (let y = -targetH; y < targetH * 2; y += th + gap) {
-            tempCtx.drawImage(tileImg, x, y, tw, th);
+        if (tilingState.type === 'text' && tilingState.text.trim() !== '') {
+          const fontPx = Math.max(14, Math.round((tilingState.textSize / 1000) * targetW));
+          tempCtx.font = `bold ${fontPx}px 'Kanit', sans-serif`;
+          tempCtx.fillStyle = tilingState.textColor;
+          tempCtx.textAlign = 'center';
+          tempCtx.textBaseline = 'middle';
+
+          const textMetrics = tempCtx.measureText(tilingState.text);
+          const tw = textMetrics.width;
+          const gapX = tw + (tilingState.gap * (targetW / 1000));
+          const gapY = fontPx * 3.5;
+
+          for (let x = -targetW; x < targetW * 2; x += gapX) {
+            for (let y = -targetH; y < targetH * 2; y += gapY) {
+              tempCtx.fillText(tilingState.text, x, y);
+            }
+          }
+        } else if (tilingState.type === 'image' && tilingState.img) {
+          const tScale = 0.15;
+          const tw = targetW * tScale;
+          const th = (tilingState.img.naturalHeight / tilingState.img.naturalWidth) * tw;
+          const gap = (tilingState.gap / 100) * tw;
+
+          for (let x = -targetW; x < targetW * 2; x += tw + gap) {
+            for (let y = -targetH; y < targetH * 2; y += th + gap) {
+              tempCtx.drawImage(tilingState.img, x, y, tw, th);
+            }
           }
         }
         tempCtx.restore();
       }
 
+      // 3. วาดโลโก้เดี่ยว
       canvasLogos.forEach((item, idx) => {
         const logoImg = loadedLogoImgs[item.imgIndex];
         if (!logoImg) return;
@@ -779,6 +891,7 @@
         }
       });
 
+      // 4. วาดข้อความ Overlay
       textItems.forEach((tItem, tIdx) => {
         if (!tItem.text || tItem.text.trim() === '') return;
 
@@ -963,4 +1076,3 @@
   </script>
 </body>
 </html>
-
