@@ -53,6 +53,12 @@
         <span class="text-xl">📷</span>
         <span class="text-xs font-bold">เลือกรูปภาพ (<span id="photoCount">0</span>/30)</span>
       </button>
+
+      <!-- Status Bar สำหรับแจ้งเตือนสถานะการโหลด -->
+      <div id="uploadStatus" class="hidden mt-2 p-2 text-center text-xs rounded bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300">
+        กำลังประมวลผลรูปภาพ...
+      </div>
+
       <div id="photoThumbnails" class="flex gap-2 overflow-x-auto mt-3 min-h-[52px]"></div>
     </section>
 
@@ -363,7 +369,7 @@
       renderLogoGallery();
     }
 
-    // ปรับปรุงระบบอ่านไฟล์รูปภาพ ป้องกันปัญหารูปไม่ขึ้นด้วย Promise & FileReader Base64
+    // ระบบประมวลผลการรับรูปภาพใหม่สำหรับสมาร์ทโฟนแบบเสถียร 100%
     document.getElementById('photoInput').addEventListener('change', async (e) => {
       const files = Array.from(e.target.files);
       if (files.length === 0) return;
@@ -372,31 +378,56 @@
         return;
       }
 
-      document.getElementById('photoCount').innerText = files.length;
-      uploadedPhotos = [];
+      const statusBox = document.getElementById('uploadStatus');
+      statusBox.classList.remove('hidden');
+      statusBox.innerText = `กำลังโหลดรูปภาพ (0/${files.length})...`;
 
-      const loadSingleImage = (file) => {
-        return new Promise((resolve, reject) => {
-          const reader = new FileReader();
-          reader.onload = (event) => {
-            const img = new Image();
-            img.onload = () => resolve(img);
-            img.onerror = () => reject(new Error('Image Load Failed'));
-            img.src = event.target.result;
+      uploadedPhotos = [];
+      document.getElementById('photoCount').innerText = files.length;
+
+      const processFile = (file, index) => {
+        return new Promise((resolve) => {
+          const img = new Image();
+          const url = URL.createObjectURL(file);
+
+          img.onload = () => {
+            // สร้าง Offscreen Canvas เพื่อให้มั่นใจว่าข้อมูลพิกเซลสมบูรณ์
+            const tempCanvas = document.createElement('canvas');
+            tempCanvas.width = img.naturalWidth || img.width;
+            tempCanvas.height = img.naturalHeight || img.height;
+            const tCtx = tempCanvas.getContext('2d');
+            tCtx.drawImage(img, 0, 0);
+
+            const readyImg = new Image();
+            readyImg.onload = () => {
+              URL.revokeObjectURL(url);
+              statusBox.innerText = `กำลังโหลดรูปภาพ (${index + 1}/${files.length})...`;
+              resolve(readyImg);
+            };
+            readyImg.src = tempCanvas.toDataURL('image/jpeg', 0.95);
           };
-          reader.onerror = () => reject(new Error('File Read Failed'));
-          reader.readAsDataURL(file);
+
+          img.onerror = () => {
+            URL.revokeObjectURL(url);
+            resolve(null);
+          };
+
+          img.src = url;
         });
       };
 
-      try {
-        const loadedImgs = await Promise.all(files.map(file => loadSingleImage(file)));
-        uploadedPhotos = loadedImgs;
+      for (let i = 0; i < files.length; i++) {
+        const loaded = await processFile(files[i], i);
+        if (loaded) uploadedPhotos.push(loaded);
+      }
+
+      statusBox.classList.add('hidden');
+      if (uploadedPhotos.length > 0) {
         currentPhotoIndex = 0;
         renderPhotoThumbnails();
         renderCanvas();
-      } catch (err) {
-        alert('เกิดข้อผิดพลาดในการโหลดรูปภาพ กรุณาลองเลือกใหม่อีกครั้ง');
+      } else {
+        alert('ไม่สามารถอ่านไฟล์รูปภาพได้ กรุณาลองเลือกรูปภาพอื่น');
       }
     });
 
@@ -419,4 +450,517 @@
 
     document.getElementById('addLogoToCanvasBtn').addEventListener('click', () => {
       if (selectedStorageLogoIndex === -1 || !loadedLogoImgs[selectedStorageLogoIndex]) {
-        alert('กรุณาเลือกหรืออัปโหลดโลโก้เข้
+        alert('กรุณาเลือกหรืออัปโหลดโลโก้เข้าคลังก่อน');
+        return;
+      }
+      canvasLogos.push({
+        imgIndex: selectedStorageLogoIndex,
+        x: 40 + (canvasLogos.length * 5),
+        y: 40 + (canvasLogos.length * 5),
+        scale: 0.3,
+        opacity: 1.0,
+        frame: 'none',
+        strokeStyle: 'none',
+        strokeWidth: 4,
+        strokeColor: '#ffffff'
+      });
+      activeCanvasLogoIndex = canvasLogos.length - 1;
+      renderPlacedLogoList();
+      renderCanvas();
+    });
+
+    function renderPlacedLogoList() {
+      const container = document.getElementById('placedLogoList');
+      document.getElementById('placedLogoCount').innerText = canvasLogos.length;
+      container.innerHTML = '';
+
+      canvasLogos.forEach((item, idx) => {
+        const logoImg = loadedLogoImgs[item.imgIndex];
+        if (!logoImg) return;
+        const btn = document.createElement('button');
+        btn.className = `px-2 py-1 text-xs rounded border flex items-center gap-1 ${idx === activeCanvasLogoIndex ? 'bg-blue-600 text-white border-blue-600' : 'bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600'}`;
+        btn.innerText = `Logo #${idx + 1}`;
+        btn.onclick = () => {
+          activeCanvasLogoIndex = idx;
+          activeTextIndex = -1;
+          syncControlsWithActiveLogo();
+          renderPlacedLogoList();
+          renderCanvas();
+        };
+        container.appendChild(btn);
+      });
+
+      syncControlsWithActiveLogo();
+    }
+
+    function syncControlsWithActiveLogo() {
+      const controls = document.getElementById('activeLogoControls');
+      if (activeCanvasLogoIndex === -1 || !canvasLogos[activeCanvasLogoIndex]) {
+        controls.style.display = 'none';
+        return;
+      }
+      controls.style.display = 'block';
+      const logo = canvasLogos[activeCanvasLogoIndex];
+      document.getElementById('logoScaleSlider').value = logo.scale * 100;
+      document.getElementById('logoOpacitySlider').value = logo.opacity * 100;
+      document.getElementById('opacityVal').innerText = Math.round(logo.opacity * 100);
+      document.getElementById('logoFrameSelect').value = logo.frame || 'none';
+      document.getElementById('logoStrokeStyleSelect').value = logo.strokeStyle || 'none';
+      document.getElementById('logoStrokeWidthSlider').value = logo.strokeWidth || 4;
+      document.getElementById('logoStrokeColorPicker').value = logo.strokeColor || '#ffffff';
+    }
+
+    function removeActiveLogo() {
+      if (activeCanvasLogoIndex !== -1) {
+        canvasLogos.splice(activeCanvasLogoIndex, 1);
+        activeCanvasLogoIndex = canvasLogos.length > 0 ? canvasLogos.length - 1 : -1;
+        renderPlacedLogoList();
+        renderCanvas();
+      }
+    }
+
+    function setLogoPosPreset(preset) {
+      if (activeCanvasLogoIndex === -1) return;
+      const logo = canvasLogos[activeCanvasLogoIndex];
+      if (preset === 'tl') { logo.x = 2; logo.y = 2; }
+      else if (preset === 'tr') { logo.x = 98; logo.y = 2; }
+      else if (preset === 'bl') { logo.x = 2; logo.y = 98; }
+      else if (preset === 'br') { logo.x = 98; logo.y = 98; }
+      else if (preset === 'center') { logo.x = 50; logo.y = 50; }
+      renderCanvas();
+    }
+
+    const tilingEnableToggle = document.getElementById('tilingEnableToggle');
+    const tilingControlsGroup = document.getElementById('tilingControlsGroup');
+    
+    tilingEnableToggle.addEventListener('change', (e) => {
+      tilingState.enabled = e.target.checked;
+      tilingControlsGroup.classList.toggle('hidden', !tilingState.enabled);
+      renderCanvas();
+    });
+
+    document.getElementById('tilingOpacitySlider').addEventListener('input', (e) => {
+      tilingState.opacity = e.target.value / 100;
+      renderCanvas();
+    });
+
+    document.getElementById('tilingGapSlider').addEventListener('input', (e) => {
+      tilingState.gap = parseInt(e.target.value);
+      renderCanvas();
+    });
+
+    document.getElementById('tilingRotateSlider').addEventListener('input', (e) => {
+      tilingState.rotate = parseInt(e.target.value);
+      renderCanvas();
+    });
+
+    document.getElementById('addTextBtn').addEventListener('click', () => {
+      textItems.push({
+        text: '✨ ข้อความ / ฿1,500',
+        font: 'Kanit',
+        size: 35,
+        color: '#ffffff',
+        align: 'center',
+        x: 50,
+        y: 80 + (textItems.length * 5)
+      });
+      activeTextIndex = textItems.length - 1;
+      activeCanvasLogoIndex = -1;
+      renderTextItemsUI();
+      renderCanvas();
+    });
+
+    function renderTextItemsUI() {
+      const container = document.getElementById('textItemsList');
+      container.innerHTML = '';
+
+      textItems.forEach((item, idx) => {
+        const itemBox = document.createElement('div');
+        itemBox.className = `p-2.5 rounded-lg border text-xs space-y-2 ${idx === activeTextIndex ? 'border-blue-500 bg-blue-50/50 dark:bg-gray-700/80' : 'border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700'}`;
+        itemBox.onclick = () => {
+          activeTextIndex = idx;
+          activeCanvasLogoIndex = -1;
+          renderTextItemsUI();
+          renderCanvas();
+        };
+
+        itemBox.innerHTML = `
+          <div class="flex justify-between items-center">
+            <span class="font-bold text-gray-700 dark:text-gray-200">ข้อความ #${idx + 1}</span>
+            <button onclick="removeTextItem(${idx})" class="text-[10px] bg-red-500 text-white px-2 py-0.5 rounded">ลบ</button>
+          </div>
+          <input type="text" value="${item.text}" oninput="updateTextProp(${idx}, 'text', this.value)" placeholder="พิมพ์ข้อความ หรือ Emoji" class="w-full p-1.5 text-xs border rounded bg-white dark:bg-gray-800 dark:border-gray-600">
+          <div class="grid grid-cols-3 gap-1">
+            <select onchange="updateTextProp(${idx}, 'font', this.value)" class="p-1 text-[11px] border rounded bg-white dark:bg-gray-800">
+              <option value="Kanit" ${item.font==='Kanit'?'selected':''}>Kanit</option>
+              <option value="Prompt" ${item.font==='Prompt'?'selected':''}>Prompt</option>
+              <option value="Chakra Petch" ${item.font==='Chakra Petch'?'selected':''}>Chakra Petch</option>
+              <option value="Sarabun" ${item.font==='Sarabun'?'selected':''}>Sarabun</option>
+            </select>
+            <input type="range" min="10" max="100" value="${item.size}" oninput="updateTextProp(${idx}, 'size', parseInt(this.value))" class="w-full">
+            <input type="color" value="${item.color}" oninput="updateTextProp(${idx}, 'color', this.value)" class="w-full h-6 p-0 border rounded cursor-pointer">
+          </div>
+        `;
+        container.appendChild(itemBox);
+      });
+    }
+
+    function updateTextProp(idx, prop, val) {
+      if (textItems[idx]) {
+        textItems[idx][prop] = val;
+        renderCanvas();
+      }
+    }
+
+    function removeTextItem(idx) {
+      textItems.splice(idx, 1);
+      activeTextIndex = textItems.length > 0 ? textItems.length - 1 : -1;
+      renderTextItemsUI();
+      renderCanvas();
+    }
+
+    document.getElementById('logoScaleSlider').addEventListener('input', (e) => {
+      if (activeCanvasLogoIndex !== -1) {
+        canvasLogos[activeCanvasLogoIndex].scale = e.target.value / 100;
+        renderCanvas();
+      }
+    });
+
+    document.getElementById('logoOpacitySlider').addEventListener('input', (e) => {
+      if (activeCanvasLogoIndex !== -1) {
+        const val = e.target.value / 100;
+        canvasLogos[activeCanvasLogoIndex].opacity = val;
+        document.getElementById('opacityVal').innerText = e.target.value;
+        renderCanvas();
+      }
+    });
+
+    document.getElementById('logoFrameSelect').addEventListener('change', (e) => {
+      if (activeCanvasLogoIndex !== -1) {
+        canvasLogos[activeCanvasLogoIndex].frame = e.target.value;
+        renderCanvas();
+      }
+    });
+
+    document.getElementById('logoStrokeStyleSelect').addEventListener('change', (e) => {
+      if (activeCanvasLogoIndex !== -1) {
+        canvasLogos[activeCanvasLogoIndex].strokeStyle = e.target.value;
+        renderCanvas();
+      }
+    });
+
+    document.getElementById('logoStrokeWidthSlider').addEventListener('input', (e) => {
+      if (activeCanvasLogoIndex !== -1) {
+        canvasLogos[activeCanvasLogoIndex].strokeWidth = parseInt(e.target.value);
+        renderCanvas();
+      }
+    });
+
+    document.getElementById('logoStrokeColorPicker').addEventListener('input', (e) => {
+      if (activeCanvasLogoIndex !== -1) {
+        canvasLogos[activeCanvasLogoIndex].strokeColor = e.target.value;
+        renderCanvas();
+      }
+    });
+
+    document.getElementById('brightnessSlider').addEventListener('input', (e) => {
+      brightness = e.target.value;
+      renderCanvas();
+    });
+
+    function setAspectRatio(ratio) {
+      currentAspect = ratio;
+      renderCanvas();
+    }
+
+    function renderCanvasForImage(photoIndex) {
+      if (uploadedPhotos.length === 0 || !uploadedPhotos[photoIndex]) return null;
+      const baseImg = uploadedPhotos[photoIndex];
+
+      let targetW = baseImg.naturalWidth || baseImg.width;
+      let targetH = baseImg.naturalHeight || baseImg.height;
+
+      if (currentAspect !== 'original') {
+        if (targetW / targetH > currentAspect) {
+          targetW = targetH * currentAspect;
+        } else {
+          targetH = targetW / currentAspect;
+        }
+      }
+
+      const tempCanvas = document.createElement('canvas');
+      tempCanvas.width = targetW;
+      tempCanvas.height = targetH;
+      const tempCtx = tempCanvas.getContext('2d');
+
+      tempCtx.filter = `brightness(${brightness}%)`;
+      const cropX = ((baseImg.naturalWidth || baseImg.width) - targetW) / 2;
+      const cropY = ((baseImg.naturalHeight || baseImg.height) - targetH) / 2;
+      tempCtx.drawImage(baseImg, cropX, cropY, targetW, targetH, 0, 0, targetW, targetH);
+      tempCtx.filter = 'none';
+
+      if (tilingState.enabled && selectedStorageLogoIndex !== -1 && loadedLogoImgs[selectedStorageLogoIndex]) {
+        const tileImg = loadedLogoImgs[selectedStorageLogoIndex];
+        const tScale = 0.15;
+        const tw = targetW * tScale;
+        const th = (tileImg.naturalHeight / tileImg.naturalWidth) * tw;
+        const gap = (tilingState.gap / 100) * tw;
+
+        tempCtx.save();
+        tempCtx.globalAlpha = tilingState.opacity;
+        tempCtx.translate(targetW / 2, targetH / 2);
+        tempCtx.rotate((tilingState.rotate * Math.PI) / 180);
+        tempCtx.translate(-targetW / 2, -targetH / 2);
+
+        for (let x = -targetW; x < targetW * 2; x += tw + gap) {
+          for (let y = -targetH; y < targetH * 2; y += th + gap) {
+            tempCtx.drawImage(tileImg, x, y, tw, th);
+          }
+        }
+        tempCtx.restore();
+      }
+
+      canvasLogos.forEach((item, idx) => {
+        const logoImg = loadedLogoImgs[item.imgIndex];
+        if (!logoImg) return;
+
+        const lWidth = targetW * item.scale;
+        const lHeight = (logoImg.naturalHeight / logoImg.naturalWidth) * lWidth;
+        const lx = (item.x / 100) * (targetW - lWidth);
+        const ly = (item.y / 100) * (targetH - lHeight);
+
+        tempCtx.save();
+        tempCtx.globalAlpha = item.opacity;
+
+        if (item.strokeStyle && item.strokeStyle !== 'none') {
+          tempCtx.save();
+          tempCtx.strokeStyle = item.strokeColor || '#ffffff';
+          tempCtx.lineWidth = Math.max(2, (item.strokeWidth || 4) * (targetW / 1000));
+
+          if (item.strokeStyle === 'dashed') {
+            tempCtx.setLineDash([12, 6]);
+          } else if (item.strokeStyle === 'dotted') {
+            tempCtx.setLineDash([3, 6]);
+          }
+
+          if (item.frame === 'circle') {
+            tempCtx.beginPath();
+            tempCtx.arc(lx + lWidth / 2, ly + lHeight / 2, Math.min(lWidth, lHeight) / 2, 0, Math.PI * 2);
+            tempCtx.stroke();
+          } else if (item.frame === 'oval') {
+            tempCtx.beginPath();
+            tempCtx.ellipse(lx + lWidth / 2, ly + lHeight / 2, lWidth / 2, lHeight / 2, 0, 0, Math.PI * 2);
+            tempCtx.stroke();
+          } else {
+            tempCtx.strokeRect(lx, ly, lWidth, lHeight);
+          }
+          tempCtx.restore();
+        }
+
+        if (item.frame === 'circle') {
+          tempCtx.beginPath();
+          tempCtx.arc(lx + lWidth / 2, ly + lHeight / 2, Math.min(lWidth, lHeight) / 2, 0, Math.PI * 2);
+          tempCtx.closePath();
+          tempCtx.clip();
+        } else if (item.frame === 'oval') {
+          tempCtx.beginPath();
+          tempCtx.ellipse(lx + lWidth / 2, ly + lHeight / 2, lWidth / 2, lHeight / 2, 0, 0, Math.PI * 2);
+          tempCtx.closePath();
+          tempCtx.clip();
+        }
+
+        tempCtx.drawImage(logoImg, lx, ly, lWidth, lHeight);
+        tempCtx.restore();
+
+        if (photoIndex === currentPhotoIndex && idx === activeCanvasLogoIndex) {
+          tempCtx.strokeStyle = '#2563eb';
+          tempCtx.lineWidth = Math.max(2, targetW * 0.003);
+          tempCtx.strokeRect(lx - 2, ly - 2, lWidth + 4, lHeight + 4);
+        }
+      });
+
+      textItems.forEach((tItem, tIdx) => {
+        if (!tItem.text || tItem.text.trim() === '') return;
+
+        tempCtx.save();
+        const fontPx = Math.max(12, Math.round((tItem.size / 1000) * targetW));
+        tempCtx.font = `bold ${fontPx}px '${tItem.font || 'Kanit'}', sans-serif`;
+        tempCtx.fillStyle = tItem.color || '#ffffff';
+        tempCtx.textAlign = 'center';
+        tempCtx.textBaseline = 'middle';
+
+        tempCtx.shadowColor = 'rgba(0,0,0,0.8)';
+        tempCtx.shadowBlur = 6;
+        tempCtx.shadowOffsetX = 2;
+        tempCtx.shadowOffsetY = 2;
+
+        const tx = (tItem.x / 100) * targetW;
+        const ty = (tItem.y / 100) * targetH;
+        tempCtx.fillText(tItem.text, tx, ty);
+        tempCtx.restore();
+
+        if (photoIndex === currentPhotoIndex && tIdx === activeTextIndex) {
+          tempCtx.strokeStyle = '#3b82f6';
+          tempCtx.lineWidth = 2;
+          const textMetrics = tempCtx.measureText(tItem.text);
+          const tw = textMetrics.width + 10;
+          const th = fontPx + 10;
+          tempCtx.strokeRect(tx - tw / 2, ty - th / 2, tw, th);
+        }
+      });
+
+      return tempCanvas;
+    }
+
+    function renderCanvas() {
+      const rendered = renderCanvasForImage(currentPhotoIndex);
+      if (!rendered) return;
+      canvas.width = rendered.width;
+      canvas.height = rendered.height;
+      ctx.drawImage(rendered, 0, 0);
+      updateFileSizeEstimate();
+    }
+
+    function getPointerPos(e) {
+      const rect = canvas.getBoundingClientRect();
+      const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+      const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+      return {
+        x: (clientX - rect.left) / rect.width * 100,
+        y: (clientY - rect.top) / rect.height * 100
+      };
+    }
+
+    canvas.addEventListener('mousedown', startDrag);
+    canvas.addEventListener('touchstart', startDrag);
+    window.addEventListener('mousemove', drag);
+    window.addEventListener('touchmove', drag);
+    window.addEventListener('mouseup', endDrag);
+    window.addEventListener('touchend', endDrag);
+
+    function startDrag(e) {
+      isDragging = true;
+      dragStart = getPointerPos(e);
+    }
+
+    function drag(e) {
+      if (!isDragging) return;
+      const currentPos = getPointerPos(e);
+      const dx = currentPos.x - dragStart.x;
+      const dy = currentPos.y - dragStart.y;
+
+      if (activeCanvasLogoIndex !== -1 && canvasLogos[activeCanvasLogoIndex]) {
+        const item = canvasLogos[activeCanvasLogoIndex];
+        item.x = Math.max(0, Math.min(100, item.x + dx));
+        item.y = Math.max(0, Math.min(100, item.y + dy));
+      } else if (activeTextIndex !== -1 && textItems[activeTextIndex]) {
+        const tItem = textItems[activeTextIndex];
+        tItem.x = Math.max(0, Math.min(100, tItem.x + dx));
+        tItem.y = Math.max(0, Math.min(100, tItem.y + dy));
+      }
+
+      dragStart = currentPos;
+      renderCanvas();
+    }
+
+    function endDrag() { isDragging = false; }
+
+    const exportFormatSelect = document.getElementById('exportFormat');
+    const jpegSettingsGroup = document.getElementById('jpegSettingsGroup');
+    const jpegQualityInput = document.getElementById('jpegQuality');
+    const jpegResolutionSelect = document.getElementById('jpegResolution');
+
+    exportFormatSelect.addEventListener('change', (e) => {
+      jpegSettingsGroup.classList.toggle('hidden', e.target.value !== 'image/jpeg');
+      renderCanvas();
+    });
+
+    jpegQualityInput.addEventListener('input', (e) => {
+      document.getElementById('qualityVal').innerText = e.target.value;
+      renderCanvas();
+    });
+
+    jpegResolutionSelect.addEventListener('change', () => { renderCanvas(); });
+
+    function getFinalCanvas(sourceCanvas) {
+      const format = exportFormatSelect.value;
+      let finalCanvas = sourceCanvas;
+
+      if (format === 'image/jpeg') {
+        const scale = parseFloat(jpegResolutionSelect.value);
+        if (scale !== 1.0) {
+          const scaledCanvas = document.createElement('canvas');
+          scaledCanvas.width = sourceCanvas.width * scale;
+          scaledCanvas.height = sourceCanvas.height * scale;
+          const sCtx = scaledCanvas.getContext('2d');
+          sCtx.drawImage(sourceCanvas, 0, 0, scaledCanvas.width, scaledCanvas.height);
+          finalCanvas = scaledCanvas;
+        }
+      }
+      return finalCanvas;
+    }
+
+    function updateFileSizeEstimate() {
+      if (uploadedPhotos.length === 0) return;
+      const format = exportFormatSelect.value;
+      const quality = format === 'image/jpeg' ? jpegQualityInput.value / 100 : 1.0;
+      const targetCanvas = getFinalCanvas(canvas);
+
+      const dataUrl = targetCanvas.toDataURL(format, quality);
+      const head = `data:${format};base64,`;
+      const sizeInBytes = Math.round((dataUrl.length - head.length) * 3 / 4);
+
+      let sizeStr = '';
+      if (sizeInBytes >= 1024 * 1024) {
+        sizeStr = (sizeInBytes / (1024 * 1024)).toFixed(2) + ' MB';
+      } else {
+        sizeStr = (sizeInBytes / 1024).toFixed(1) + ' KB';
+      }
+      document.getElementById('fileSizeEst').innerText = sizeStr;
+    }
+
+    document.getElementById('downloadBtn').addEventListener('click', () => {
+      if (uploadedPhotos.length === 0) {
+        alert('กรุณาอัปโหลดรูปภาพก่อนส่งออก');
+        return;
+      }
+      const format = exportFormatSelect.value;
+      const quality = format === 'image/jpeg' ? jpegQualityInput.value / 100 : 1.0;
+      const targetCanvas = getFinalCanvas(canvas);
+
+      const dataUrl = targetCanvas.toDataURL(format, quality);
+      const link = document.createElement('a');
+      const ext = format === 'image/png' ? 'png' : 'jpg';
+      link.download = `watermark_photo_${Date.now()}.${ext}`;
+      link.href = dataUrl;
+      link.click();
+    });
+
+    document.getElementById('downloadZipBtn').addEventListener('click', async () => {
+      if (uploadedPhotos.length === 0) {
+        alert('กรุณาอัปโหลดรูปภาพก่อนส่งออก');
+        return;
+      }
+
+      const zip = new JSZip();
+      const format = exportFormatSelect.value;
+      const quality = format === 'image/jpeg' ? jpegQualityInput.value / 100 : 1.0;
+      const ext = format === 'image/png' ? 'png' : 'jpg';
+
+      for (let i = 0; i < uploadedPhotos.length; i++) {
+        const rawCanvas = renderCanvasForImage(i);
+        const finalCanvas = getFinalCanvas(rawCanvas);
+        const dataUrl = finalCanvas.toDataURL(format, quality);
+        const base64Data = dataUrl.replace(/^data:image\/(png|jpeg);base64,/, "");
+        zip.file(`edited_photo_${i + 1}.${ext}`, base64Data, { base64: true });
+      }
+
+      const content = await zip.generateAsync({ type: "blob" });
+      saveAs(content, `batch_watermarked_photos_${Date.now()}.zip`);
+    });
+
+    loadLogosFromStorage();
+  </script>
+</body>
+</html>
+
