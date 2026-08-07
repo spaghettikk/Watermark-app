@@ -2,7 +2,7 @@
 <html lang="th" class="dark">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Filmmy Watermark Editor</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
@@ -15,15 +15,15 @@
     canvas { touch-action: none; }
   </style>
 </head>
-<body class="bg-gray-100 dark:bg-gray-900 text-gray-800 dark:text-gray-100 font-sans min-h-screen pb-10 transition-colors text-sm md:text-base">
+<body class="bg-gray-100 dark:bg-gray-900 text-gray-800 dark:text-gray-100 font-sans min-h-screen pb-10 transition-colors">
 
-  <header class="bg-blue-600 dark:bg-gray-800 text-white p-3.5 md:px-8 sticky top-0 z-50 shadow-md flex justify-between items-center">
+  <header class="bg-blue-600 dark:bg-gray-800 text-white p-3 md:px-8 sticky top-0 z-50 shadow-md flex justify-between items-center">
     <div>
-      <h1 class="text-lg md:text-2xl font-bold leading-tight">Filmmy Watermark Editor</h1>
-      <p class="text-xs md:text-sm text-blue-200 dark:text-gray-400 font-normal">By FilmmyE22NCB</p>
+      <h1 class="text-base md:text-xl font-bold leading-tight">Filmmy Watermark Editor</h1>
+      <p class="text-[10px] md:text-xs text-blue-200 dark:text-gray-400 font-normal">By FilmmyE22NCB</p>
     </div>
     
-    <button id="themeToggleBtn" class="p-2 md:px-4 md:py-2 bg-blue-700 dark:bg-gray-700 rounded-lg text-sm md:text-base font-medium hover:opacity-90 transition-all">
+    <button id="themeToggleBtn" class="p-1.5 md:px-3 md:py-2 bg-blue-700 dark:bg-gray-700 rounded-lg text-xs md:text-sm font-medium hover:opacity-90">
       🌙 / ☀️
     </button>
   </header>
@@ -31,254 +31,46 @@
   <main class="max-w-7xl mx-auto p-4 md:p-6 space-y-6">
 
     <section class="bg-white dark:bg-gray-800 p-4 md:p-6 rounded-xl shadow transition-colors">
-      <h2 class="text-xl md:text-2xl font-bold mb-3 flex items-center justify-between">
+      <h2 class="text-lg md:text-xl font-semibold mb-3 flex items-center justify-between">
         <span>1. จัดการคลังโลโก้</span>
-        <label class="text-sm md:text-base bg-blue-50 dark:bg-blue-900/50 text-blue-600 dark:text-blue-300 font-medium px-4 py-2 rounded-lg border border-blue-200 dark:border-blue-700 cursor-pointer hover:bg-blue-100 transition-colors">
+        <label class="text-sm bg-blue-50 dark:bg-blue-900/50 text-blue-600 dark:text-blue-300 font-normal px-3 py-1.5 rounded border border-blue-200 dark:border-blue-700 cursor-pointer hover:bg-blue-100">
           + เพิ่มโลโก้
           <input type="file" id="logoInput" accept="image/*" multiple class="hidden">
         </label>
       </h2>
-      <div id="logoGallery" class="flex gap-3 overflow-x-auto py-2 min-h-[72px] border border-dashed dark:border-gray-700 rounded-lg p-3">
-        <span class="text-sm text-gray-400 m-auto" id="noLogoText">ยังไม่มีโลโก้ในระบบ</span>
+      <div id="logoGallery" class="flex gap-2 overflow-x-auto py-2 min-h-[64px] border border-dashed dark:border-gray-700 rounded p-2">
+        <span class="text-xs text-gray-400 m-auto" id="noLogoText">ยังไม่มีโลโก้ในระบบ</span>
       </div>
     </section>
 
     <section class="bg-white dark:bg-gray-800 p-4 md:p-6 rounded-xl shadow transition-colors">
-      <h2 class="text-xl md:text-2xl font-bold mb-3">2. อัปโหลดรูปภาพ (สูงสุด 30 รูป)</h2>
+      <h2 class="text-lg md:text-xl font-semibold mb-2">2. อัปโหลดรูปภาพ (สูงสุด 30 รูป)</h2>
       <input type="file" id="photoInput" accept="image/*" multiple class="hidden">
-      <button onclick="document.getElementById('photoInput').click()" class="w-full py-6 md:py-8 bg-blue-50 dark:bg-gray-700/50 border-2 border-dashed border-blue-300 dark:border-gray-600 rounded-xl text-blue-600 dark:text-gray-200 font-medium hover:bg-blue-100 flex flex-col items-center justify-center gap-2 transition-all">
-        <span class="text-3xl">📷</span>
-        <span class="text-base md:text-lg font-bold">เลือกรูปภาพ (<span id="photoCount">0</span>/30)</span>
+      <button onclick="document.getElementById('photoInput').click()" class="w-full py-6 bg-blue-50 dark:bg-gray-700/50 border-2 border-dashed border-blue-300 dark:border-gray-600 rounded-xl text-blue-600 dark:text-gray-200 font-medium hover:bg-blue-100 flex flex-col items-center justify-center gap-1 transition-all">
+        <span class="text-2xl">📷</span>
+        <span class="text-sm font-bold">เลือกรูปภาพ (<span id="photoCount">0</span>/30)</span>
       </button>
 
-      <div id="uploadStatus" class="hidden mt-3 p-3 text-center text-sm rounded-lg bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300">
+      <div id="uploadStatus" class="hidden mt-2 p-2 text-center text-xs rounded bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300">
         กำลังประมวลผลรูปภาพ...
       </div>
 
-      <div id="photoThumbnails" class="flex gap-3 overflow-x-auto mt-3 min-h-[60px]"></div>
+      <div id="photoThumbnails" class="flex gap-2 overflow-x-auto mt-3 min-h-[52px]"></div>
     </section>
 
     <section class="bg-white dark:bg-gray-800 p-4 md:p-6 rounded-xl shadow relative transition-colors">
-      <h2 class="text-xl md:text-2xl font-bold mb-4">3. ปรับแต่งภาพและจัดวางโลโก้</h2>
+      <h2 class="text-lg md:text-xl font-semibold mb-4">3. ปรับแต่งภาพและจัดวางโลโก้</h2>
 
-      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
-        
-        <div class="space-y-3">
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
+        <div class="space-y-2">
           <div class="relative w-full aspect-square bg-gray-200 dark:bg-gray-900 rounded-xl overflow-hidden flex items-center justify-center border dark:border-gray-700 shadow-inner">
             <canvas id="mainCanvas" class="max-w-full max-h-full"></canvas>
           </div>
-          <p class="text-xs md:text-sm text-gray-500 dark:text-gray-400 text-center">ใช้นิ้วหรือเมาส์ลากเพื่อจัดตำแหน่งโลโก้หรือข้อความบนภาพได้เลย</p>
+          <p class="text-xs text-gray-500 dark:text-gray-400 text-center">ใช้นิ้วหรือเมาส์ลากเพื่อจัดตำแหน่งโลโก้หรือข้อความบนภาพได้เลย</p>
         </div>
 
         <div class="space-y-4">
-          
-          <div class="p-4 bg-gray-50 dark:bg-gray-700/50 rounded-xl space-y-3">
+          <div class="p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg space-y-3">
             <div class="flex justify-between items-center">
-              <span class="text-base font-bold">โลโก้บนภาพ (<span id="placedLogoCount">0</span>)</span>
-              <button id="addLogoToCanvasBtn" class="text-xs md:text-sm bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg font-medium shadow transition-colors">
-                + วาง Logo ที่เลือก
-              </button>
-            </div>
-            <div id="placedLogoList" class="flex gap-2 overflow-x-auto py-1"></div>
-          </div>
-
-          <div id="activeLogoControls" class="space-y-4 p-4 border rounded-xl border-gray-200 dark:border-gray-700">
-            <div class="flex justify-between items-center">
-              <span class="text-sm md:text-base font-bold text-blue-600 dark:text-blue-400">ปรับแต่งโลโก้ที่เลือก</span>
-              <button onclick="removeActiveLogo()" class="text-xs bg-red-500 text-white px-2.5 py-1 rounded hover:bg-red-600 transition-colors">ลบโลโก้นี้</button>
-            </div>
-
-            <div>
-              <label class="text-xs md:text-sm font-medium text-gray-600 dark:text-gray-300">ย้ายตำแหน่งด่วน</label>
-              <div class="grid grid-cols-5 gap-1.5 mt-1.5">
-                <button onclick="setLogoPosPreset('tl')" class="py-1.5 text-xs md:text-sm bg-gray-200 dark:bg-gray-600 hover:opacity-80 rounded">ซ้ายบน</button>
-                <button onclick="setLogoPosPreset('tr')" class="py-1.5 text-xs md:text-sm bg-gray-200 dark:bg-gray-600 hover:opacity-80 rounded">ขวาบน</button>
-                <button onclick="setLogoPosPreset('center')" class="py-1.5 text-xs md:text-sm bg-gray-200 dark:bg-gray-600 hover:opacity-80 rounded">กลาง</button>
-                <button onclick="setLogoPosPreset('bl')" class="py-1.5 text-xs md:text-sm bg-gray-200 dark:bg-gray-600 hover:opacity-80 rounded">ซ้ายล่าง</button>
-                <button onclick="setLogoPosPreset('br')" class="py-1.5 text-xs md:text-sm bg-gray-200 dark:bg-gray-600 hover:opacity-80 rounded">ขวาล่าง</button>
-              </div>
-            </div>
-
-            <div class="grid grid-cols-2 gap-3">
-              <div>
-                <label class="text-xs md:text-sm font-medium text-gray-600 dark:text-gray-300">ขนาดโลโก้</label>
-                <input type="range" id="logoScaleSlider" min="5" max="100" value="30" class="w-full mt-1">
-              </div>
-              <div>
-                <label class="text-xs md:text-sm font-medium text-gray-600 dark:text-gray-300">ความโปร่งแสง (<span id="opacityVal">100</span>%)</label>
-                <input type="range" id="logoOpacitySlider" min="0" max="100" value="100" class="w-full mt-1">
-              </div>
-            </div>
-
-            <div class="p-3 bg-gray-100 dark:bg-gray-800 rounded-xl space-y-3 border dark:border-gray-700">
-              <span class="text-xs md:text-sm font-semibold text-gray-700 dark:text-gray-200">ระบบขอบโลโก้อิสระ (Adaptive Border)</span>
-              
-              <div class="grid grid-cols-2 gap-3">
-                <div>
-                  <label class="text-xs text-gray-500">รูปแบบ Masking</label>
-                  <select id="logoFrameSelect" class="w-full mt-1 p-2 text-xs md:text-sm border rounded-lg bg-white dark:bg-gray-700 dark:border-gray-600">
-                    <option value="none">ขอบตามไฟล์จริง (Alpha Channel)</option>
-                    <option value="circle">ครอบทรงกลม (Circle)</option>
-                    <option value="oval">ครอบทรงวงรี (Oval)</option>
-                  </select>
-                </div>
-                <div>
-                  <label class="text-xs text-gray-500">ประเภทเส้นขอบ (Stroke Pattern)</label>
-                  <select id="logoStrokeStyleSelect" class="w-full mt-1 p-2 text-xs md:text-sm border rounded-lg bg-white dark:bg-gray-700 dark:border-gray-600">
-                    <option value="none">ไม่มีเส้นขอบ</option>
-                    <option value="solid">เส้นทึบ (Solid)</option>
-                    <option value="dashed">เส้นประ (Dashed Line)</option>
-                    <option value="dotted">ลายไข่ปลา (Dotted Line)</option>
-                  </select>
-                </div>
-              </div>
-
-              <div class="grid grid-cols-2 gap-3">
-                <div>
-                  <label class="text-xs text-gray-500">ความหนาเส้นขอบ</label>
-                  <input type="range" id="logoStrokeWidthSlider" min="1" max="20" value="4" class="w-full mt-1">
-                </div>
-                <div>
-                  <label class="text-xs text-gray-500">สีเส้นขอบ</label>
-                  <input type="color" id="logoStrokeColorPicker" value="#ffffff" class="w-full h-8 p-0 border rounded-lg cursor-pointer mt-1">
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div class="p-4 bg-blue-50/50 dark:bg-blue-950/30 rounded-xl space-y-3 border border-blue-200 dark:border-blue-900">
-            <div class="flex justify-between items-center">
-              <div>
-                <span class="text-sm md:text-base font-bold text-blue-900 dark:text-blue-300">โหมดลายน้ำกระจายเต็มรูป (Tiled Watermark Pattern)</span>
-                <p class="text-xs text-gray-500">ใส่ข้อความหรือรูปภาพเพื่อปูพรมเต็มรูปภาพ</p>
-              </div>
-              <label class="inline-flex items-center cursor-pointer">
-                <input type="checkbox" id="tilingEnableToggle" class="sr-only peer">
-                <div class="w-11 h-6 bg-gray-300 peer-focus:outline-none rounded-full peer dark:bg-gray-600 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
-              </label>
-            </div>
-
-            <div id="tilingControlsGroup" class="hidden space-y-3 pt-2 border-t border-blue-200 dark:border-blue-900">
-              <div>
-                <label class="text-xs md:text-sm font-medium text-gray-700 dark:text-gray-300">ประเภทลายน้ำ:</label>
-                <div class="flex gap-6 mt-1 text-xs md:text-sm">
-                  <label class="inline-flex items-center gap-1.5 cursor-pointer">
-                    <input type="radio" name="tilingType" value="text" checked class="text-blue-600">
-                    <span>ข้อความ (Text)</span>
-                  </label>
-                  <label class="inline-flex items-center gap-1.5 cursor-pointer">
-                    <input type="radio" name="tilingType" value="image" class="text-blue-600">
-                    <span>รูปภาพ (Image)</span>
-                  </label>
-                </div>
-              </div>
-
-              <div id="tilingTextOptions" class="space-y-2">
-                <input type="text" id="tilingTextInput" value="FilmmyE22NCB" placeholder="พิมพ์ข้อความลายน้ำ" class="w-full p-2 text-xs md:text-sm border rounded-lg bg-white dark:bg-gray-800 dark:border-gray-600">
-                <div class="grid grid-cols-2 gap-3">
-                  <div>
-                    <label class="text-xs text-gray-500">ขนาดฟอนต์</label>
-                    <input type="range" id="tilingTextSizeSlider" min="10" max="80" value="28" class="w-full mt-1">
-                  </div>
-                  <div>
-                    <label class="text-xs text-gray-500">สีข้อความ</label>
-                    <input type="color" id="tilingTextColorPicker" value="#ffffff" class="w-full h-8 p-0 border rounded-lg cursor-pointer mt-1">
-                  </div>
-                </div>
-              </div>
-
-              <div id="tilingImageOptions" class="hidden space-y-2">
-                <label class="block text-xs md:text-sm bg-white dark:bg-gray-800 p-2.5 rounded-lg border border-dashed text-center cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700">
-                  <span class="text-blue-600 dark:text-blue-400 font-medium">+ อัปโหลดภาพลายน้ำ</span>
-                  <input type="file" id="tilingImageInput" accept="image/*" class="hidden">
-                </label>
-                <div id="tilingImagePreview" class="text-xs text-gray-500 text-center">ยังไม่ได้เลือกภาพลายน้ำ</div>
-              </div>
-
-              <div class="grid grid-cols-3 gap-3 pt-2 border-t dark:border-gray-700">
-                <div>
-                  <label class="text-xs text-gray-500">ความจาง</label>
-                  <input type="range" id="tilingOpacitySlider" min="5" max="100" value="25" class="w-full mt-1">
-                </div>
-                <div>
-                  <label class="text-xs text-gray-500">ระยะห่าง (Gap)</label>
-                  <input type="range" id="tilingGapSlider" min="50" max="300" value="120" class="w-full mt-1">
-                </div>
-                <div>
-                  <label class="text-xs text-gray-500">มุมเอียง (Rotate)</label>
-                  <input type="range" id="tilingRotateSlider" min="-45" max="45" value="-20" class="w-full mt-1">
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div class="p-4 bg-gray-50 dark:bg-gray-700/50 rounded-xl space-y-3">
-            <div class="flex justify-between items-center">
-              <span class="text-sm md:text-base font-bold">ข้อความ & สติ๊กเกอร์ Emoji</span>
-              <button id="addTextBtn" class="text-xs md:text-sm bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded-lg font-medium shadow transition-colors">
-                + เพิ่มข้อความ
-              </button>
-            </div>
-            <div id="textItemsList" class="space-y-2.5"></div>
-          </div>
-
-          <div class="space-y-3 pt-3 border-t dark:border-gray-700">
-            <div>
-              <label class="text-xs md:text-sm font-medium text-gray-600 dark:text-gray-300">ปรับความสว่างภาพหลัก</label>
-              <input type="range" id="brightnessSlider" min="50" max="150" value="100" class="w-full mt-1">
-            </div>
-            <div>
-              <label class="text-xs md:text-sm font-medium text-gray-600 dark:text-gray-300">อัตราส่วนภาพ (Crop)</label>
-              <div class="grid grid-cols-4 gap-2 mt-1.5">
-                <button onclick="setAspectRatio('original')" class="py-1.5 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 text-xs md:text-sm rounded-lg border dark:border-gray-600">Original</button>
-                <button onclick="setAspectRatio(1)" class="py-1.5 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 text-xs md:text-sm rounded-lg border dark:border-gray-600">1:1</button>
-                <button onclick="setAspectRatio(4/5)" class="py-1.5 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 text-xs md:text-sm rounded-lg border dark:border-gray-600">4:5</button>
-                <button onclick="setAspectRatio(16/9)" class="py-1.5 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 text-xs md:text-sm rounded-lg border dark:border-gray-600">16:9</button>
-              </div>
-            </div>
-          </div>
-
-        </div>
-      </div>
-    </section>
-
-    <section class="bg-white dark:bg-gray-800 p-4 md:p-6 rounded-xl shadow space-y-4 transition-colors">
-      <h2 class="text-xl md:text-2xl font-bold">4. ส่งออกรูปภาพ</h2>
-      
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div>
-          <label class="text-xs md:text-sm font-medium text-gray-600 dark:text-gray-300">ฟอร์แมตไฟล์</label>
-          <select id="exportFormat" class="w-full mt-1 p-2.5 text-xs md:text-sm border rounded-lg bg-white dark:bg-gray-700 dark:border-gray-600">
-            <option value="image/png">PNG (โปร่งใส / คุณภาพสูงสุด)</option>
-            <option value="image/jpeg" selected>JPEG (ปรับขนาดและความละเอียดได้)</option>
-          </select>
-        </div>
-
-        <div id="jpegSettingsGroup" class="space-y-3">
-          <div class="grid grid-cols-2 gap-3">
-            <div>
-              <label class="text-xs md:text-sm font-medium text-gray-600 dark:text-gray-300">ความละเอียดภาพ</label>
-              <select id="jpegResolution" class="w-full mt-1 p-2.5 text-xs md:text-sm border rounded-lg bg-white dark:bg-gray-700 dark:border-gray-600">
-                <option value="1.0" selected>สูง (High - 100%)</option>
-                <option value="0.7">กลาง (Medium - 70%)</option>
-                <option value="0.5">ต่ำ (Low - 50%)</option>
-              </select>
-            </div>
-            <div>
-              <label class="text-xs md:text-sm font-medium text-gray-600 dark:text-gray-300">คุณภาพ (<span id="qualityVal">100</span>%)</label>
-              <input type="range" id="jpegQuality" min="10" max="100" value="100" class="w-full mt-2">
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div class="p-3.5 bg-blue-50 dark:bg-blue-950/40 rounded-xl flex justify-between items-center text-xs md:text-sm">
-        <span class="font-medium text-blue-800 dark:text-blue-200">ประเมินขนาดไฟล์ต่อรูป:</span>
-        <span id="fileSizeEst" class="font-bold text-blue-600 dark:text-blue-400">0 KB</span>
-      </div>
-
-      <div class="grid grid-cols-2 gap-4 pt-2">
-        <button id="downloadBtn" class="py-3.5 bg-green-600 hover:bg-green-700 text-white font-bold rounded-xl shadow text-sm md:text-base transition-colors">
-          บันทึกรูปปัจจุบัน
-        </button>
-        <button id="downloadZipBtn" class="py-3
+              <span class="text-sm font-semibold">โลโก้บนภาพ (<span id="placedLogoCount">0</span>)</span>
+              <button id="addLogoToCanvasBtn" class="text
