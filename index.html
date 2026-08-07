@@ -17,7 +17,6 @@
 </head>
 <body class="bg-gray-100 dark:bg-gray-900 text-gray-800 dark:text-gray-100 font-sans min-h-screen pb-10 transition-colors">
 
-  <!-- Header -->
   <header class="bg-blue-600 dark:bg-gray-800 text-white p-3 md:px-8 sticky top-0 z-50 shadow-md flex justify-between items-center">
     <div>
       <h1 class="text-base md:text-xl font-bold leading-tight">Filmmy Watermark Editor</h1>
@@ -29,10 +28,8 @@
     </button>
   </header>
 
-  <!-- ปรับแก้ไข max-w ให้แสดงผลเต็มจอบน Desktop -->
   <main class="max-w-7xl mx-auto p-4 md:p-6 space-y-6">
 
-    <!-- Section 1: Logo Management -->
     <section class="bg-white dark:bg-gray-800 p-4 md:p-6 rounded-xl shadow transition-colors">
       <h2 class="text-lg md:text-xl font-semibold mb-3 flex items-center justify-between">
         <span>1. จัดการคลังโลโก้</span>
@@ -46,7 +43,6 @@
       </div>
     </section>
 
-    <!-- Section 2: Photo Upload -->
     <section class="bg-white dark:bg-gray-800 p-4 md:p-6 rounded-xl shadow transition-colors">
       <h2 class="text-lg md:text-xl font-semibold mb-2">2. อัปโหลดรูปภาพ (สูงสุด 30 รูป)</h2>
       <input type="file" id="photoInput" accept="image/*" multiple class="hidden">
@@ -62,12 +58,10 @@
       <div id="photoThumbnails" class="flex gap-2 overflow-x-auto mt-3 min-h-[52px]"></div>
     </section>
 
-    <!-- Section 3: Editor Canvas (ใช้ Grid 分 2 คอลัมน์บน Desktop) -->
     <section class="bg-white dark:bg-gray-800 p-4 md:p-6 rounded-xl shadow relative transition-colors">
       <h2 class="text-lg md:text-xl font-semibold mb-4">3. ปรับแต่งภาพและจัดวางโลโก้</h2>
 
       <div class="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
-        <!-- ฝั่งซ้าย: Canvas แสดงรูปใหญ่ -->
         <div class="space-y-2">
           <div class="relative w-full aspect-square bg-gray-200 dark:bg-gray-900 rounded-xl overflow-hidden flex items-center justify-center border dark:border-gray-700 shadow-inner">
             <canvas id="mainCanvas" class="max-w-full max-h-full"></canvas>
@@ -75,10 +69,7 @@
           <p class="text-xs text-gray-500 dark:text-gray-400 text-center">ใช้นิ้วหรือเมาส์ลากเพื่อจัดตำแหน่งโลโก้หรือข้อความบนภาพได้เลย</p>
         </div>
 
-        <!-- ฝั่งขวา: เครื่องมือปรับแต่งทั้งหมด -->
         <div class="space-y-4">
-          
-          <!-- Multi-Logo Controls -->
           <div class="p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg space-y-3">
             <div class="flex justify-between items-center">
               <span class="text-sm font-semibold">โลโก้บนภาพ (<span id="placedLogoCount">0</span>)</span>
@@ -89,7 +80,6 @@
             <div id="placedLogoList" class="flex gap-2 overflow-x-auto py-1"></div>
           </div>
 
-          <!-- Active Logo Controls -->
           <div id="activeLogoControls" class="space-y-3 p-3 border rounded-xl border-gray-200 dark:border-gray-700">
             <div class="flex justify-between items-center">
               <span class="text-xs font-bold text-blue-600 dark:text-blue-400">ปรับแต่งโลโก้ที่เลือก</span>
@@ -154,7 +144,6 @@
             </div>
           </div>
 
-          <!-- Tiling Engine -->
           <div class="p-3 bg-blue-50/50 dark:bg-blue-950/30 rounded-lg space-y-3 border border-blue-200 dark:border-blue-900">
             <div class="flex justify-between items-center">
               <div>
@@ -182,7 +171,6 @@
                 </div>
               </div>
 
-              <!-- โหมดข้อความ -->
               <div id="tilingTextOptions" class="space-y-2">
                 <input type="text" id="tilingTextInput" value="FilmmyE22NCB" placeholder="พิมพ์ข้อความลายน้ำ" class="w-full p-1.5 text-xs border rounded bg-white dark:bg-gray-800 dark:border-gray-600">
                 <div class="grid grid-cols-2 gap-2">
@@ -197,7 +185,6 @@
                 </div>
               </div>
 
-              <!-- โหมดรูปภาพ -->
               <div id="tilingImageOptions" class="hidden space-y-2">
                 <label class="block text-xs bg-white dark:bg-gray-800 p-2 rounded border border-dashed text-center cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700">
                   <span class="text-blue-600 dark:text-blue-400 font-medium">+ อัปโหลดภาพลายน้ำ</span>
@@ -223,7 +210,6 @@
             </div>
           </div>
 
-          <!-- Text Customization -->
           <div class="p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg space-y-3">
             <div class="flex justify-between items-center">
               <span class="text-sm font-semibold">ข้อความ & สติ๊กเกอร์ Emoji</span>
@@ -234,7 +220,6 @@
             <div id="textItemsList" class="space-y-2"></div>
           </div>
 
-          <!-- Image Controls -->
           <div class="space-y-3 pt-3 border-t dark:border-gray-700">
             <div>
               <label class="text-xs font-medium text-gray-600 dark:text-gray-300">ปรับความสว่างภาพหลัก</label>
@@ -255,7 +240,6 @@
       </div>
     </section>
 
-    <!-- Section 4: Export Settings -->
     <section class="bg-white dark:bg-gray-800 p-4 md:p-6 rounded-xl shadow space-y-3 transition-colors">
       <h2 class="text-lg md:text-xl font-semibold">4. ส่งออกรูปภาพ</h2>
       
@@ -315,10 +299,9 @@
 
         <div class="pt-2 flex flex-col items-center justify-center">
           <div class="relative group cursor-pointer bg-white dark:bg-gray-900 p-3 rounded-2xl border border-amber-200 dark:border-gray-700 shadow-md hover:shadow-lg transition-all duration-300 hover:scale-105" onclick="openQrModal()">
-            <div class="w-44 h-44 overflow-hidden rounded-xl bg-white flex items-center justify-center">
-              <img src="image.png" alt="QR Code Payment" class="w-[125%] h-[125%] max-w-none object-cover object-center translate-y-[-2%]">
+            <div class="w-44 h-44 overflow-hidden rounded-xl bg-white flex items-center justify-center border">
+              <img id="qrImgThumb" src="qrcode.png" alt="QR Code" class="w-[125%] h-[125%] max-w-none object-cover object-center translate-y-[-2%]" onerror="handleQrError(this)">
             </div>
-            
             <div class="absolute inset-0 bg-black/40 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white text-xs font-medium backdrop-blur-[2px]">
               🔍 คลิกเพื่อขยายใหญ่
             </div>
@@ -332,22 +315,39 @@
       </div>
     </footer>
 
-    <div id="qrModal" class="fixed inset-0 bg-black/70 z-[100] hidden flex items-center justify-center p-4 backdrop-blur-sm" onclick="closeQrModal()">
-      <div class="bg-white dark:bg-gray-800 p-6 rounded-3xl max-w-xs w-full text-center space-y-4 relative shadow-2xl border border-gray-200 dark:border-gray-700" onclick="event.stopPropagation()">
-        <button onclick="closeQrModal()" class="absolute top-3 right-4 text-gray-400 hover:text-gray-600 dark:hover:text-white text-xl font-bold">×</button>
-        <h3 class="font-bold text-gray-800 dark:text-gray-100 text-sm">สแกนชำระเงิน / เลี้ยงกาแฟ ☕</h3>
-        <div class="w-60 h-60 mx-auto overflow-hidden rounded-xl bg-white border border-gray-100 shadow-inner flex items-center justify-center">
-          <img src="image.png" alt="QR Code Payment Large" class="w-[125%] h-[125%] max-w-none object-cover object-center translate-y-[-2%]">
-        </div>
-        <button onclick="closeQrModal()" class="w-full py-2 bg-amber-500 hover:bg-amber-600 text-white rounded-xl text-xs font-bold transition-colors">
-          ปิดหน้าต่าง
-        </button>
-      </div>
-    </div>
-
   </main>
 
+  <div id="qrModal" class="fixed inset-0 bg-black/70 z-[100] hidden flex items-center justify-center p-4 backdrop-blur-sm" onclick="closeQrModal()">
+    <div class="bg-white dark:bg-gray-800 p-6 rounded-3xl max-w-xs w-full text-center space-y-4 relative shadow-2xl border border-gray-200 dark:border-gray-700" onclick="event.stopPropagation()">
+      <button onclick="closeQrModal()" class="absolute top-3 right-4 text-gray-400 hover:text-gray-600 dark:hover:text-white text-xl font-bold">×</button>
+      <h3 class="font-bold text-gray-800 dark:text-gray-100 text-sm">สแกนชำระเงิน / เลี้ยงกาแฟ ☕</h3>
+      <div class="w-60 h-60 mx-auto overflow-hidden rounded-xl bg-white border border-gray-100 shadow-inner flex items-center justify-center">
+        <img id="qrImgLarge" src="qrcode.png" alt="QR Code Large" class="w-[125%] h-[125%] max-w-none object-cover object-center translate-y-[-2%]">
+      </div>
+      <button onclick="closeQrModal()" class="w-full py-2 bg-amber-500 hover:bg-amber-600 text-white rounded-xl text-xs font-bold transition-colors">
+        ปิดหน้าต่าง
+      </button>
+    </div>
+  </div>
+
   <script>
+    function openQrModal() {
+      document.getElementById('qrModal').classList.remove('hidden');
+    }
+
+    function closeQrModal() {
+      document.getElementById('qrModal').classList.add('hidden');
+    }
+
+    // ฟังก์ชันช่วยสลับชื่อไฟล์อัตโนมัติหากหา qrcode.png ไม่พบ
+    function handleQrError(imgEl) {
+      if (!imgEl.dataset.triedImagePng) {
+        imgEl.dataset.triedImagePng = "true";
+        imgEl.src = "image.png";
+        document.getElementById('qrImgLarge').src = "image.png";
+      }
+    }
+
     let storedLogos = [];
     let loadedLogoImgs = [];
     let selectedStorageLogoIndex = -1;
@@ -1127,15 +1127,6 @@
     });
 
     loadLogosFromStorage();
-
-    function openQrModal() {
-      document.getElementById('qrModal').classList.remove('hidden');
-    }
-
-    function closeQrModal() {
-      document.getElementById('qrModal').classList.add('hidden');
-    }
-    
   </script>
 </body>
 </html>
