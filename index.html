@@ -301,6 +301,50 @@
       </div>
     </section>
 
+    <footer class="mt-12 mb-6 border-t border-gray-200 dark:border-gray-800 pt-8 transition-colors">
+      <div class="max-w-md mx-auto bg-gradient-to-br from-amber-50/80 via-orange-50/50 to-amber-100/60 dark:from-gray-800 dark:via-gray-800/90 dark:to-gray-800/50 backdrop-blur-md p-6 rounded-2xl border border-amber-200/60 dark:border-gray-700 shadow-sm text-center space-y-4">
+        
+        <div class="flex items-center justify-center gap-2 text-amber-900 dark:text-amber-400 font-bold text-base md:text-lg">
+          <span class="text-2xl">☕</span>
+          <span>เลี้ยงกาแฟ & ขนมผู้พัฒนา</span>
+        </div>
+
+        <p class="text-xs md:text-sm text-gray-600 dark:text-gray-300 font-normal leading-relaxed">
+          หากชอบใจหรือช่วยย่นระยะเวลาการทำงานของคุณ สามารถสแกนชำระเงินผ่าน QR Code ด้านล่างเพื่อสนับสนุนได้เลยนะคะ
+        </p>
+
+        <div class="pt-2 flex flex-col items-center justify-center">
+          <div class="relative group cursor-pointer bg-white dark:bg-gray-900 p-3 rounded-2xl border border-amber-200 dark:border-gray-700 shadow-md hover:shadow-lg transition-all duration-300 hover:scale-105" onclick="openQrModal()">
+            <div class="w-44 h-44 overflow-hidden rounded-xl bg-white flex items-center justify-center">
+              <img src="image.png" alt="QR Code Payment" class="w-[125%] h-[125%] max-w-none object-cover object-center translate-y-[-2%]">
+            </div>
+            
+            <div class="absolute inset-0 bg-black/40 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white text-xs font-medium backdrop-blur-[2px]">
+              🔍 คลิกเพื่อขยายใหญ่
+            </div>
+          </div>
+          <span class="text-[11px] text-gray-400 dark:text-gray-500 mt-2">สแกนผ่านแอปธนาคารใดก็ได้</span>
+        </div>
+
+        <div class="pt-2 border-t border-amber-200/40 dark:border-gray-700/60 text-[11px] text-gray-500 dark:text-gray-400">
+          ขอบคุณทุกการซัพพอร์ตและกำลังใจค่ะ ❤️
+        </div>
+      </div>
+    </footer>
+
+    <div id="qrModal" class="fixed inset-0 bg-black/70 z-[100] hidden flex items-center justify-center p-4 backdrop-blur-sm" onclick="closeQrModal()">
+      <div class="bg-white dark:bg-gray-800 p-6 rounded-3xl max-w-xs w-full text-center space-y-4 relative shadow-2xl border border-gray-200 dark:border-gray-700" onclick="event.stopPropagation()">
+        <button onclick="closeQrModal()" class="absolute top-3 right-4 text-gray-400 hover:text-gray-600 dark:hover:text-white text-xl font-bold">×</button>
+        <h3 class="font-bold text-gray-800 dark:text-gray-100 text-sm">สแกนชำระเงิน / เลี้ยงกาแฟ ☕</h3>
+        <div class="w-60 h-60 mx-auto overflow-hidden rounded-xl bg-white border border-gray-100 shadow-inner flex items-center justify-center">
+          <img src="image.png" alt="QR Code Payment Large" class="w-[125%] h-[125%] max-w-none object-cover object-center translate-y-[-2%]">
+        </div>
+        <button onclick="closeQrModal()" class="w-full py-2 bg-amber-500 hover:bg-amber-600 text-white rounded-xl text-xs font-bold transition-colors">
+          ปิดหน้าต่าง
+        </button>
+      </div>
+    </div>
+
   </main>
 
   <script>
@@ -1083,6 +1127,15 @@
     });
 
     loadLogosFromStorage();
+
+    function openQrModal() {
+      document.getElementById('qrModal').classList.remove('hidden');
+    }
+
+    function closeQrModal() {
+      document.getElementById('qrModal').classList.add('hidden');
+    }
+    
   </script>
 </body>
 </html>
