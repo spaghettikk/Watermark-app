@@ -32,7 +32,7 @@
 
     <section class="bg-white dark:bg-gray-800 p-4 md:p-6 rounded-xl shadow transition-colors">
       <h2 class="text-lg md:text-xl font-semibold mb-3 flex items-center justify-between">
-        <span>1. จัดการคลังโลโก้</span>
+        <span>1. จัดการคลังโลโก้ (ถ้าไฟล์ละเอียด โปรดรอสักครู่) </span>
         <label class="text-sm bg-blue-50 dark:bg-blue-900/50 text-blue-600 dark:text-blue-300 font-normal px-3 py-1.5 rounded border border-blue-200 dark:border-blue-700 cursor-pointer hover:bg-blue-100">
           + เพิ่มโลโก้
           <input type="file" id="logoInput" accept="image/*" multiple class="hidden">
@@ -290,17 +290,17 @@
         
         <div class="flex items-center justify-center gap-2 text-amber-900 dark:text-amber-400 font-bold text-base md:text-lg">
           <span class="text-2xl">☕</span>
-          <span>เลี้ยงกาแฟ & ขนมผู้พัฒนา</span>
+          <span>เลี้ยงกาแฟผู้พัฒนา</span>
         </div>
 
         <p class="text-xs md:text-sm text-gray-600 dark:text-gray-300 font-normal leading-relaxed">
-          หากชอบใจหรือช่วยย่นระยะเวลาการทำงานของคุณ สามารถสแกนชำระเงินผ่าน QR Code ด้านล่างเพื่อสนับสนุนได้เลยนะคะ
+          หากมีประโยชน์กับท่าน สามารถสแกนชำระเงินผ่าน QR Code ด้านล่างเพื่อสนับสนุนทางผู้จัดได้เลยนะคะ
         </p>
 
         <div class="pt-2 flex flex-col items-center justify-center">
           <div class="relative group cursor-pointer bg-white dark:bg-gray-900 p-3 rounded-2xl border border-amber-200 dark:border-gray-700 shadow-md hover:shadow-lg transition-all duration-300 hover:scale-105" onclick="openQrModal()">
             <div class="w-44 h-44 overflow-hidden rounded-xl bg-white flex items-center justify-center border">
-              <img id="qrImgThumb" src="qrcode.png.jpg" alt="QR Code" class="w-[125%] h-[125%] max-w-none object-cover object-center translate-y-[-2%]" onerror="handleQrError(this)">
+              <img id="qrImgThumb" src="qrcode.png" alt="QR Code" class="w-[125%] h-[125%] max-w-none object-cover object-center translate-y-[-2%]" onerror="handleQrError(this)">
             </div>
             <div class="absolute inset-0 bg-black/40 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white text-xs font-medium backdrop-blur-[2px]">
               🔍 คลิกเพื่อขยายใหญ่
