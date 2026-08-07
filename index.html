@@ -73,4 +73,1093 @@
           <div class="p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg space-y-3">
             <div class="flex justify-between items-center">
               <span class="text-sm font-semibold">โลโก้บนภาพ (<span id="placedLogoCount">0</span>)</span>
-              <button id="addLogoToCanvasBtn" class="text
+              <button id="addLogoToCanvasBtn" class="text-xs bg-green-600 hover:bg-green-700 text-white px-3 py-1.5 rounded-lg font-medium shadow">
+                + วาง Logo ที่เลือก
+              </button>
+            </div>
+            <div id="placedLogoList" class="flex gap-2 overflow-x-auto py-1"></div>
+          </div>
+
+          <div id="activeLogoControls" class="space-y-3 p-3 border rounded-xl border-gray-200 dark:border-gray-700">
+            <div class="flex justify-between items-center">
+              <span class="text-xs font-bold text-blue-600 dark:text-blue-400">ปรับแต่งโลโก้ที่เลือก</span>
+              <button onclick="removeActiveLogo()" class="text-[10px] bg-red-500 text-white px-2 py-0.5 rounded hover:bg-red-600">ลบโลโก้นี้</button>
+            </div>
+
+            <div>
+              <label class="text-xs font-medium text-gray-600 dark:text-gray-300">ย้ายตำแหน่งด่วน</label>
+              <div class="grid grid-cols-5 gap-1 mt-1">
+                <button onclick="setLogoPosPreset('tl')" class="p-1 text-[10px] bg-gray-200 dark:bg-gray-600 hover:opacity-80 rounded">ซ้ายบน</button>
+                <button onclick="setLogoPosPreset('tr')" class="p-1 text-[10px] bg-gray-200 dark:bg-gray-600 hover:opacity-80 rounded">ขวาบน</button>
+                <button onclick="setLogoPosPreset('center')" class="p-1 text-[10px] bg-gray-200 dark:bg-gray-600 hover:opacity-80 rounded">กลาง</button>
+                <button onclick="setLogoPosPreset('bl')" class="p-1 text-[10px] bg-gray-200 dark:bg-gray-600 hover:opacity-80 rounded">ซ้ายล่าง</button>
+                <button onclick="setLogoPosPreset('br')" class="p-1 text-[10px] bg-gray-200 dark:bg-gray-600 hover:opacity-80 rounded">ขวาล่าง</button>
+              </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-2">
+              <div>
+                <label class="text-[11px] font-medium text-gray-600 dark:text-gray-300">ขนาดโลโก้</label>
+                <input type="range" id="logoScaleSlider" min="5" max="100" value="30" class="w-full">
+              </div>
+              <div>
+                <label class="text-[11px] font-medium text-gray-600 dark:text-gray-300">ความโปร่งแสง (<span id="opacityVal">100</span>%)</label>
+                <input type="range" id="logoOpacitySlider" min="0" max="100" value="100" class="w-full">
+              </div>
+            </div>
+
+            <div class="p-2.5 bg-gray-100 dark:bg-gray-800 rounded-lg space-y-2 border dark:border-gray-700">
+              <span class="text-xs font-semibold text-gray-700 dark:text-gray-200">ระบบขอบโลโก้อิสระ (Adaptive Border)</span>
+              
+              <div class="grid grid-cols-2 gap-2">
+                <div>
+                  <label class="text-[10px] text-gray-500">รูปแบบ Masking</label>
+                  <select id="logoFrameSelect" class="w-full mt-0.5 p-1 text-xs border rounded bg-white dark:bg-gray-700 dark:border-gray-600">
+                    <option value="none">ขอบตามไฟล์จริง (Alpha Channel)</option>
+                    <option value="circle">ครอบทรงกลม (Circle)</option>
+                    <option value="oval">ครอบทรงวงรี (Oval)</option>
+                  </select>
+                </div>
+                <div>
+                  <label class="text-[10px] text-gray-500">ประเภทเส้นขอบ (Stroke Pattern)</label>
+                  <select id="logoStrokeStyleSelect" class="w-full mt-0.5 p-1 text-xs border rounded bg-white dark:bg-gray-700 dark:border-gray-600">
+                    <option value="none">ไม่มีเส้นขอบ</option>
+                    <option value="solid">เส้นทึบ (Solid)</option>
+                    <option value="dashed">เส้นประ (Dashed Line)</option>
+                    <option value="dotted">ลายไข่ปลา (Dotted Line)</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="grid grid-cols-2 gap-2">
+                <div>
+                  <label class="text-[10px] text-gray-500">ความหนาเส้นขอบ</label>
+                  <input type="range" id="logoStrokeWidthSlider" min="1" max="20" value="4" class="w-full">
+                </div>
+                <div>
+                  <label class="text-[10px] text-gray-500">สีเส้นขอบ</label>
+                  <input type="color" id="logoStrokeColorPicker" value="#ffffff" class="w-full h-6 p-0 border rounded cursor-pointer">
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="p-3 bg-blue-50/50 dark:bg-blue-950/30 rounded-lg space-y-3 border border-blue-200 dark:border-blue-900">
+            <div class="flex justify-between items-center">
+              <div>
+                <span class="text-xs font-bold text-blue-900 dark:text-blue-300">โหมดลายน้ำกระจายเต็มรูป (Tiled Watermark Pattern)</span>
+                <p class="text-[10px] text-gray-500">ใส่ข้อความหรือรูปภาพเพื่อปูพรมเต็มรูปภาพ</p>
+              </div>
+              <label class="inline-flex items-center cursor-pointer">
+                <input type="checkbox" id="tilingEnableToggle" class="sr-only peer">
+                <div class="w-9 h-5 bg-gray-300 peer-focus:outline-none rounded-full peer dark:bg-gray-600 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-blue-600"></div>
+              </label>
+            </div>
+
+            <div id="tilingControlsGroup" class="hidden space-y-3 pt-2 border-t border-blue-200 dark:border-blue-900">
+              <div>
+                <label class="text-[11px] font-medium text-gray-700 dark:text-gray-300">ประเภทลายน้ำ:</label>
+                <div class="flex gap-4 mt-1 text-xs">
+                  <label class="inline-flex items-center gap-1 cursor-pointer">
+                    <input type="radio" name="tilingType" value="text" checked class="text-blue-600">
+                    <span>ข้อความ (Text)</span>
+                  </label>
+                  <label class="inline-flex items-center gap-1 cursor-pointer">
+                    <input type="radio" name="tilingType" value="image" class="text-blue-600">
+                    <span>รูปภาพ (Image)</span>
+                  </label>
+                </div>
+              </div>
+
+              <div id="tilingTextOptions" class="space-y-2">
+                <input type="text" id="tilingTextInput" value="FilmmyE22NCB" placeholder="พิมพ์ข้อความลายน้ำ" class="w-full p-1.5 text-xs border rounded bg-white dark:bg-gray-800 dark:border-gray-600">
+                <div class="grid grid-cols-2 gap-2">
+                  <div>
+                    <label class="text-[10px] text-gray-500">ขนาดฟอนต์</label>
+                    <input type="range" id="tilingTextSizeSlider" min="10" max="80" value="28" class="w-full">
+                  </div>
+                  <div>
+                    <label class="text-[10px] text-gray-500">สีข้อความ</label>
+                    <input type="color" id="tilingTextColorPicker" value="#ffffff" class="w-full h-6 p-0 border rounded cursor-pointer">
+                  </div>
+                </div>
+              </div>
+
+              <div id="tilingImageOptions" class="hidden space-y-2">
+                <label class="block text-xs bg-white dark:bg-gray-800 p-2 rounded border border-dashed text-center cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700">
+                  <span class="text-blue-600 dark:text-blue-400 font-medium">+ อัปโหลดภาพลายน้ำ</span>
+                  <input type="file" id="tilingImageInput" accept="image/*" class="hidden">
+                </label>
+                <div id="tilingImagePreview" class="text-[10px] text-gray-500 text-center">ยังไม่ได้เลือกภาพลายน้ำ</div>
+              </div>
+
+              <div class="grid grid-cols-3 gap-2 pt-1 border-t dark:border-gray-700">
+                <div>
+                  <label class="text-[10px] text-gray-500">ความจาง</label>
+                  <input type="range" id="tilingOpacitySlider" min="5" max="100" value="25" class="w-full">
+                </div>
+                <div>
+                  <label class="text-[10px] text-gray-500">ระยะห่าง (Gap)</label>
+                  <input type="range" id="tilingGapSlider" min="50" max="300" value="120" class="w-full">
+                </div>
+                <div>
+                  <label class="text-[10px] text-gray-500">มุมเอียง (Rotate)</label>
+                  <input type="range" id="tilingRotateSlider" min="-45" max="45" value="-20" class="w-full">
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg space-y-3">
+            <div class="flex justify-between items-center">
+              <span class="text-sm font-semibold">ข้อความ & สติ๊กเกอร์ Emoji</span>
+              <button id="addTextBtn" class="text-xs bg-blue-600 hover:bg-blue-700 text-white px-2 py-1 rounded">
+                + เพิ่มข้อความ
+              </button>
+            </div>
+            <div id="textItemsList" class="space-y-2"></div>
+          </div>
+
+          <div class="space-y-3 pt-3 border-t dark:border-gray-700">
+            <div>
+              <label class="text-xs font-medium text-gray-600 dark:text-gray-300">ปรับความสว่างภาพหลัก</label>
+              <input type="range" id="brightnessSlider" min="50" max="150" value="100" class="w-full">
+            </div>
+            <div>
+              <label class="text-xs font-medium text-gray-600 dark:text-gray-300">อัตราส่วนภาพ (Crop)</label>
+              <div class="grid grid-cols-4 gap-2 mt-1">
+                <button onclick="setAspectRatio('original')" class="px-2 py-1 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 text-xs rounded border dark:border-gray-600">Original</button>
+                <button onclick="setAspectRatio(1)" class="px-2 py-1 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 text-xs rounded border dark:border-gray-600">1:1</button>
+                <button onclick="setAspectRatio(4/5)" class="px-2 py-1 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 text-xs rounded border dark:border-gray-600">4:5</button>
+                <button onclick="setAspectRatio(16/9)" class="px-2 py-1 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 text-xs rounded border dark:border-gray-600">16:9</button>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </section>
+
+    <section class="bg-white dark:bg-gray-800 p-4 md:p-6 rounded-xl shadow space-y-3 transition-colors">
+      <h2 class="text-lg md:text-xl font-semibold">4. ส่งออกรูปภาพ</h2>
+      
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <label class="text-xs font-medium text-gray-600 dark:text-gray-300">ฟอร์แมตไฟล์</label>
+          <select id="exportFormat" class="w-full mt-1 p-2 border rounded bg-white dark:bg-gray-700 dark:border-gray-600">
+            <option value="image/png">PNG (โปร่งใส / คุณภาพสูงสุด)</option>
+            <option value="image/jpeg" selected>JPEG (ปรับขนาดและความละเอียดได้)</option>
+          </select>
+        </div>
+
+        <div id="jpegSettingsGroup" class="space-y-3">
+          <div class="grid grid-cols-2 gap-2">
+            <div>
+              <label class="text-xs font-medium text-gray-600 dark:text-gray-300">ความละเอียดภาพ</label>
+              <select id="jpegResolution" class="w-full mt-1 p-2 border rounded bg-white dark:bg-gray-700 dark:border-gray-600">
+                <option value="1.0" selected>สูง (High - 100%)</option>
+                <option value="0.7">กลาง (Medium - 70%)</option>
+                <option value="0.5">ต่ำ (Low - 50%)</option>
+              </select>
+            </div>
+            <div>
+              <label class="text-xs font-medium text-gray-600 dark:text-gray-300">คุณภาพ (<span id="qualityVal">100</span>%)</label>
+              <input type="range" id="jpegQuality" min="10" max="100" value="100" class="w-full mt-2">
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="p-3 bg-blue-50 dark:bg-blue-950/40 rounded-lg flex justify-between items-center text-xs">
+        <span class="font-medium text-blue-800 dark:text-blue-200">ประเมินขนาดไฟล์ต่อรูป:</span>
+        <span id="fileSizeEst" class="font-bold text-blue-600 dark:text-blue-400">0 KB</span>
+      </div>
+
+      <div class="grid grid-cols-2 gap-4 pt-2">
+        <button id="downloadBtn" class="py-3 bg-green-600 hover:bg-green-700 text-white font-bold rounded-lg shadow text-xs md:text-sm">
+          บันทึกรูปปัจจุบัน
+        </button>
+        <button id="downloadZipBtn" class="py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg shadow text-xs md:text-sm">
+          📦 โหลดทุกรูปเป็น ZIP
+        </button>
+      </div>
+    </section>
+
+    <footer class="mt-12 mb-6 border-t border-gray-200 dark:border-gray-800 pt-8 transition-colors">
+      <div class="max-w-md mx-auto bg-gradient-to-br from-amber-50/80 via-orange-50/50 to-amber-100/60 dark:from-gray-800 dark:via-gray-800/90 dark:to-gray-800/50 backdrop-blur-md p-6 rounded-2xl border border-amber-200/60 dark:border-gray-700 shadow-sm text-center space-y-4">
+        
+        <div class="flex items-center justify-center gap-2 text-amber-900 dark:text-amber-400 font-bold text-base md:text-lg">
+          <span class="text-2xl">☕</span>
+          <span>เลี้ยงกาแฟ & ขนมผู้พัฒนา</span>
+        </div>
+
+        <p class="text-xs md:text-sm text-gray-600 dark:text-gray-300 font-normal leading-relaxed">
+          หากชอบใจหรือช่วยย่นระยะเวลาการทำงานของคุณ สามารถสแกนชำระเงินผ่าน QR Code ด้านล่างเพื่อสนับสนุนได้เลยนะคะ
+        </p>
+
+        <div class="pt-2 flex flex-col items-center justify-center">
+          <div class="relative group cursor-pointer bg-white dark:bg-gray-900 p-3 rounded-2xl border border-amber-200 dark:border-gray-700 shadow-md hover:shadow-lg transition-all duration-300 hover:scale-105" onclick="openQrModal()">
+            <div class="w-44 h-44 overflow-hidden rounded-xl bg-white flex items-center justify-center border">
+              <img id="qrImgThumb" src="qrcode.png.jpg" alt="QR Code" class="w-[125%] h-[125%] max-w-none object-cover object-center translate-y-[-2%]" onerror="handleQrError(this)">
+            </div>
+            <div class="absolute inset-0 bg-black/40 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white text-xs font-medium backdrop-blur-[2px]">
+              🔍 คลิกเพื่อขยายใหญ่
+            </div>
+          </div>
+          <span class="text-[11px] text-gray-400 dark:text-gray-500 mt-2">สแกนผ่านแอปธนาคารใดก็ได้</span>
+        </div>
+
+        <div class="pt-2 border-t border-amber-200/40 dark:border-gray-700/60 text-[11px] text-gray-500 dark:text-gray-400">
+          ขอบคุณทุกการซัพพอร์ตและกำลังใจค่ะ ❤️
+        </div>
+      </div>
+    </footer>
+
+  </main>
+
+  <div id="qrModal" class="fixed inset-0 bg-black/70 z-[100] hidden flex items-center justify-center p-4 backdrop-blur-sm" onclick="closeQrModal()">
+    <div class="bg-white dark:bg-gray-800 p-6 rounded-3xl max-w-xs w-full text-center space-y-4 relative shadow-2xl border border-gray-200 dark:border-gray-700" onclick="event.stopPropagation()">
+      <button onclick="closeQrModal()" class="absolute top-3 right-4 text-gray-400 hover:text-gray-600 dark:hover:text-white text-xl font-bold">×</button>
+      <h3 class="font-bold text-gray-800 dark:text-gray-100 text-sm">สแกนชำระเงิน / เลี้ยงกาแฟ ☕</h3>
+      <div class="w-60 h-60 mx-auto overflow-hidden rounded-xl bg-white border border-gray-100 shadow-inner flex items-center justify-center">
+        <img id="qrImgLarge" src="qrcode.png.jpg" alt="QR Code Large" class="w-[125%] h-[125%] max-w-none object-cover object-center translate-y-[-2%]">
+      </div>
+      <button onclick="closeQrModal()" class="w-full py-2 bg-amber-500 hover:bg-amber-600 text-white rounded-xl text-xs font-bold transition-colors">
+        ปิดหน้าต่าง
+      </button>
+    </div>
+  </div>
+
+  <script>
+    function openQrModal() {
+      document.getElementById('qrModal').classList.remove('hidden');
+    }
+
+    function closeQrModal() {
+      document.getElementById('qrModal').classList.add('hidden');
+    }
+
+    function handleQrError(imgEl) {
+      if (!imgEl.dataset.triedFallback) {
+        imgEl.dataset.triedFallback = "true";
+        imgEl.src = "qrcode.png";
+        document.getElementById('qrImgLarge').src = "qrcode.png";
+      }
+    }
+
+    let storedLogos = [];
+    let loadedLogoImgs = [];
+    let selectedStorageLogoIndex = -1;
+    let uploadedPhotos = [];
+    let currentPhotoIndex = 0;
+
+    let canvasLogos = [];
+    let activeCanvasLogoIndex = -1;
+
+    let textItems = [];
+    let activeTextIndex = -1;
+
+    let tilingState = {
+      enabled: false,
+      type: 'text',
+      text: 'FilmmyE22NCB',
+      textSize: 28,
+      textColor: '#ffffff',
+      img: null,
+      opacity: 0.25,
+      gap: 120,
+      rotate: -20
+    };
+
+    const canvas = document.getElementById('mainCanvas');
+    const ctx = canvas.getContext('2d');
+    let currentAspect = 'original';
+    let brightness = 100;
+    let isDragging = false;
+    let dragStart = { x: 0, y: 0 };
+
+    document.getElementById('themeToggleBtn').addEventListener('click', () => {
+      document.documentElement.classList.toggle('dark');
+    });
+
+    function loadLogosFromStorage() {
+      const saved = localStorage.getItem('app_saved_logos');
+      if (saved) {
+        storedLogos = JSON.parse(saved);
+        let loadedCount = 0;
+        loadedLogoImgs = [];
+        storedLogos.forEach((src, idx) => {
+          const img = new Image();
+          img.onload = () => {
+            loadedLogoImgs[idx] = img;
+            loadedCount++;
+            if (loadedCount === storedLogos.length) {
+              if (selectedStorageLogoIndex === -1 && loadedLogoImgs.length > 0) {
+                selectedStorageLogoIndex = 0;
+              }
+              renderLogoGallery();
+            }
+          };
+          img.src = src;
+        });
+      }
+    }
+
+    function saveLogosToStorage() {
+      localStorage.setItem('app_saved_logos', JSON.stringify(storedLogos));
+    }
+
+    // ปรับอัปเกรดระบบอัปโหลดโลโก้ด้วย Auto-Resizer ป้องกันเบราว์เซอร์โควต้าเต็ม
+    document.getElementById('logoInput').addEventListener('change', (e) => {
+      const files = Array.from(e.target.files);
+      if (files.length === 0) return;
+
+      files.forEach(file => {
+        const reader = new FileReader();
+        reader.onload = (event) => {
+          const img = new Image();
+          img.onload = () => {
+            const maxDim = 800;
+            let w = img.naturalWidth || img.width;
+            let h = img.naturalHeight || img.height;
+            if (w > maxDim || h > maxDim) {
+              if (w > h) {
+                h = Math.round((h * maxDim) / w);
+                w = maxDim;
+              } else {
+                w = Math.round((w * maxDim) / h);
+                h = maxDim;
+              }
+            }
+
+            const tempCanvas = document.createElement('canvas');
+            tempCanvas.width = w;
+            tempCanvas.height = h;
+            const tCtx = tempCanvas.getContext('2d');
+            tCtx.drawImage(img, 0, 0, w, h);
+
+            const resizedBase64 = tempCanvas.toDataURL('image/png');
+
+            storedLogos.push(resizedBase64);
+            try {
+              saveLogosToStorage();
+            } catch (err) {
+              console.warn('พื้นที่จัดเก็บข้อมูลเครื่องเต็ม');
+            }
+
+            const readyImg = new Image();
+            readyImg.onload = () => {
+              loadedLogoImgs.push(readyImg);
+              selectedStorageLogoIndex = loadedLogoImgs.length - 1;
+              renderLogoGallery();
+            };
+            readyImg.src = resizedBase64;
+          };
+          img.src = event.target.result;
+        };
+        reader.readAsDataURL(file);
+      });
+
+      e.target.value = '';
+    });
+
+    function renderLogoGallery() {
+      const gallery = document.getElementById('logoGallery');
+      const noLogoText = document.getElementById('noLogoText');
+      if (loadedLogoImgs.length > 0) noLogoText.style.display = 'none';
+
+      gallery.innerHTML = '';
+      loadedLogoImgs.forEach((logo, index) => {
+        const container = document.createElement('div');
+        container.className = 'relative flex-shrink-0';
+        
+        const imgEl = document.createElement('img');
+        imgEl.src = logo.src;
+        imgEl.className = `h-12 w-12 object-contain border-2 rounded p-1 cursor-pointer ${index === selectedStorageLogoIndex ? 'border-blue-500 bg-blue-50 dark:bg-gray-700' : 'border-gray-200 dark:border-gray-600'}`;
+        imgEl.onclick = () => {
+          selectedStorageLogoIndex = index;
+          renderLogoGallery();
+        };
+
+        const delBtn = document.createElement('button');
+        delBtn.innerHTML = '×';
+        delBtn.className = 'absolute -top-1 -right-1 bg-red-500 text-white rounded-full w-4 h-4 text-xs flex items-center justify-center';
+        delBtn.onclick = (e) => {
+          e.stopPropagation();
+          deleteLogoFromStorage(index);
+        };
+
+        container.appendChild(imgEl);
+        container.appendChild(delBtn);
+        gallery.appendChild(container);
+      });
+    }
+
+    function deleteLogoFromStorage(index) {
+      storedLogos.splice(index, 1);
+      loadedLogoImgs.splice(index, 1);
+      saveLogosToStorage();
+      selectedStorageLogoIndex = loadedLogoImgs.length > 0 ? 0 : -1;
+      renderLogoGallery();
+    }
+
+    document.getElementById('photoInput').addEventListener('change', async (e) => {
+      const files = Array.from(e.target.files);
+      if (files.length === 0) return;
+      if (files.length > 30) {
+        alert('เลือกรูปภาพได้ไม่เกิน 30 รูป');
+        return;
+      }
+
+      const statusBox = document.getElementById('uploadStatus');
+      statusBox.classList.remove('hidden');
+      statusBox.innerText = `กำลังโหลดรูปภาพ (0/${files.length})...`;
+
+      uploadedPhotos = [];
+      document.getElementById('photoCount').innerText = files.length;
+
+      const processFile = (file, index) => {
+        return new Promise((resolve) => {
+          const img = new Image();
+          const url = URL.createObjectURL(file);
+
+          img.onload = () => {
+            const tempCanvas = document.createElement('canvas');
+            tempCanvas.width = img.naturalWidth || img.width;
+            tempCanvas.height = img.naturalHeight || img.height;
+            const tCtx = tempCanvas.getContext('2d');
+            tCtx.drawImage(img, 0, 0);
+
+            const readyImg = new Image();
+            readyImg.onload = () => {
+              URL.revokeObjectURL(url);
+              statusBox.innerText = `กำลังโหลดรูปภาพ (${index + 1}/${files.length})...`;
+              resolve(readyImg);
+            };
+            readyImg.src = tempCanvas.toDataURL('image/jpeg', 0.95);
+          };
+
+          img.onerror = () => {
+            URL.revokeObjectURL(url);
+            resolve(null);
+          };
+
+          img.src = url;
+        });
+      };
+
+      for (let i = 0; i < files.length; i++) {
+        const loaded = await processFile(files[i], i);
+        if (loaded) uploadedPhotos.push(loaded);
+      }
+
+      statusBox.classList.add('hidden');
+      if (uploadedPhotos.length > 0) {
+        currentPhotoIndex = 0;
+        renderPhotoThumbnails();
+        renderCanvas();
+      } else {
+        alert('ไม่สามารถอ่านไฟล์รูปภาพได้ กรุณาลองเลือกรูปภาพอื่น');
+      }
+      e.target.value = '';
+    });
+
+    function renderPhotoThumbnails() {
+      const container = document.getElementById('photoThumbnails');
+      container.innerHTML = '';
+      uploadedPhotos.forEach((photo, idx) => {
+        if (!photo) return;
+        const thumb = document.createElement('img');
+        thumb.src = photo.src;
+        thumb.className = `h-12 w-12 object-cover rounded cursor-pointer border-2 flex-shrink-0 ${idx === currentPhotoIndex ? 'border-blue-600' : 'border-transparent'}`;
+        thumb.onclick = () => {
+          currentPhotoIndex = idx;
+          renderPhotoThumbnails();
+          renderCanvas();
+        };
+        container.appendChild(thumb);
+      });
+    }
+
+    document.getElementById('addLogoToCanvasBtn').addEventListener('click', () => {
+      if (selectedStorageLogoIndex === -1 || !loadedLogoImgs[selectedStorageLogoIndex]) {
+        alert('กรุณาเลือกหรืออัปโหลดโลโก้เข้าคลังก่อน');
+        return;
+      }
+      canvasLogos.push({
+        imgIndex: selectedStorageLogoIndex,
+        x: 40 + (canvasLogos.length * 5),
+        y: 40 + (canvasLogos.length * 5),
+        scale: 0.3,
+        opacity: 1.0,
+        frame: 'none',
+        strokeStyle: 'none',
+        strokeWidth: 4,
+        strokeColor: '#ffffff'
+      });
+      activeCanvasLogoIndex = canvasLogos.length - 1;
+      renderPlacedLogoList();
+      renderCanvas();
+    });
+
+    function renderPlacedLogoList() {
+      const container = document.getElementById('placedLogoList');
+      document.getElementById('placedLogoCount').innerText = canvasLogos.length;
+      container.innerHTML = '';
+
+      canvasLogos.forEach((item, idx) => {
+        const logoImg = loadedLogoImgs[item.imgIndex];
+        if (!logoImg) return;
+        const btn = document.createElement('button');
+        btn.className = `px-2 py-1 text-xs rounded border flex items-center gap-1 ${idx === activeCanvasLogoIndex ? 'bg-blue-600 text-white border-blue-600' : 'bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600'}`;
+        btn.innerText = `Logo #${idx + 1}`;
+        btn.onclick = () => {
+          activeCanvasLogoIndex = idx;
+          activeTextIndex = -1;
+          syncControlsWithActiveLogo();
+          renderPlacedLogoList();
+          renderCanvas();
+        };
+        container.appendChild(btn);
+      });
+
+      syncControlsWithActiveLogo();
+    }
+
+    function syncControlsWithActiveLogo() {
+      const controls = document.getElementById('activeLogoControls');
+      if (activeCanvasLogoIndex === -1 || !canvasLogos[activeCanvasLogoIndex]) {
+        controls.style.display = 'none';
+        return;
+      }
+      controls.style.display = 'block';
+      const logo = canvasLogos[activeCanvasLogoIndex];
+      document.getElementById('logoScaleSlider').value = logo.scale * 100;
+      document.getElementById('logoOpacitySlider').value = logo.opacity * 100;
+      document.getElementById('opacityVal').innerText = Math.round(logo.opacity * 100);
+      document.getElementById('logoFrameSelect').value = logo.frame || 'none';
+      document.getElementById('logoStrokeStyleSelect').value = logo.strokeStyle || 'none';
+      document.getElementById('logoStrokeWidthSlider').value = logo.strokeWidth || 4;
+      document.getElementById('logoStrokeColorPicker').value = logo.strokeColor || '#ffffff';
+    }
+
+    function removeActiveLogo() {
+      if (activeCanvasLogoIndex !== -1) {
+        canvasLogos.splice(activeCanvasLogoIndex, 1);
+        activeCanvasLogoIndex = canvasLogos.length > 0 ? canvasLogos.length - 1 : -1;
+        renderPlacedLogoList();
+        renderCanvas();
+      }
+    }
+
+    function setLogoPosPreset(preset) {
+      if (activeCanvasLogoIndex !== -1) {
+        const logo = canvasLogos[activeCanvasLogoIndex];
+        if (preset === 'tl') { logo.x = 2; logo.y = 2; }
+        else if (preset === 'tr') { logo.x = 98; logo.y = 2; }
+        else if (preset === 'bl') { logo.x = 2; logo.y = 98; }
+        else if (preset === 'br') { logo.x = 98; logo.y = 98; }
+        else if (preset === 'center') { logo.x = 50; logo.y = 50; }
+        renderCanvas();
+      }
+    }
+
+    const tilingEnableToggle = document.getElementById('tilingEnableToggle');
+    const tilingControlsGroup = document.getElementById('tilingControlsGroup');
+    const tilingTextOptions = document.getElementById('tilingTextOptions');
+    const tilingImageOptions = document.getElementById('tilingImageOptions');
+
+    tilingEnableToggle.addEventListener('change', (e) => {
+      tilingState.enabled = e.target.checked;
+      tilingControlsGroup.classList.toggle('hidden', !tilingState.enabled);
+      renderCanvas();
+    });
+
+    document.querySelectorAll('input[name="tilingType"]').forEach(radio => {
+      radio.addEventListener('change', (e) => {
+        tilingState.type = e.target.value;
+        if (tilingState.type === 'text') {
+          tilingTextOptions.classList.remove('hidden');
+          tilingImageOptions.classList.add('hidden');
+        } else {
+          tilingTextOptions.classList.add('hidden');
+          tilingImageOptions.classList.remove('hidden');
+        }
+        renderCanvas();
+      });
+    });
+
+    document.getElementById('tilingTextInput').addEventListener('input', (e) => {
+      tilingState.text = e.target.value;
+      renderCanvas();
+    });
+
+    document.getElementById('tilingTextSizeSlider').addEventListener('input', (e) => {
+      tilingState.textSize = parseInt(e.target.value);
+      renderCanvas();
+    });
+
+    document.getElementById('tilingTextColorPicker').addEventListener('input', (e) => {
+      tilingState.textColor = e.target.value;
+      renderCanvas();
+    });
+
+    document.getElementById('tilingImageInput').addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = (event) => {
+          const img = new Image();
+          img.onload = () => {
+            tilingState.img = img;
+            document.getElementById('tilingImagePreview').innerText = `อัปโหลดเรียบร้อย: ${file.name}`;
+            renderCanvas();
+          };
+          img.src = event.target.result;
+        };
+        reader.readAsDataURL(file);
+      }
+    });
+
+    document.getElementById('tilingOpacitySlider').addEventListener('input', (e) => {
+      tilingState.opacity = e.target.value / 100;
+      renderCanvas();
+    });
+
+    document.getElementById('tilingGapSlider').addEventListener('input', (e) => {
+      tilingState.gap = parseInt(e.target.value);
+      renderCanvas();
+    });
+
+    document.getElementById('tilingRotateSlider').addEventListener('input', (e) => {
+      tilingState.rotate = parseInt(e.target.value);
+      renderCanvas();
+    });
+
+    document.getElementById('addTextBtn').addEventListener('click', () => {
+      textItems.push({
+        text: '✨ ข้อความ / ฿1,500',
+        font: 'Kanit',
+        size: 35,
+        color: '#ffffff',
+        align: 'center',
+        x: 50,
+        y: 80 + (textItems.length * 5)
+      });
+      activeTextIndex = textItems.length - 1;
+      activeCanvasLogoIndex = -1;
+      renderTextItemsUI();
+      renderCanvas();
+    });
+
+    function renderTextItemsUI() {
+      const container = document.getElementById('textItemsList');
+      container.innerHTML = '';
+
+      textItems.forEach((item, idx) => {
+        const itemBox = document.createElement('div');
+        itemBox.className = `p-2.5 rounded-lg border text-xs space-y-2 ${idx === activeTextIndex ? 'border-blue-500 bg-blue-50/50 dark:bg-gray-700/80' : 'border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700'}`;
+        itemBox.onclick = () => {
+          activeTextIndex = idx;
+          activeCanvasLogoIndex = -1;
+          renderTextItemsUI();
+          renderCanvas();
+        };
+
+        itemBox.innerHTML = `
+          <div class="flex justify-between items-center">
+            <span class="font-bold text-gray-700 dark:text-gray-200">ข้อความ #${idx + 1}</span>
+            <button onclick="removeTextItem(${idx})" class="text-[10px] bg-red-500 text-white px-2 py-0.5 rounded">ลบ</button>
+          </div>
+          <input type="text" value="${item.text}" oninput="updateTextProp(${idx}, 'text', this.value)" placeholder="พิมพ์ข้อความ หรือ Emoji" class="w-full p-1.5 text-xs border rounded bg-white dark:bg-gray-800 dark:border-gray-600">
+          <div class="grid grid-cols-3 gap-1">
+            <select onchange="updateTextProp(${idx}, 'font', this.value)" class="p-1 text-[11px] border rounded bg-white dark:bg-gray-800">
+              <option value="Kanit" ${item.font==='Kanit'?'selected':''}>Kanit</option>
+              <option value="Prompt" ${item.font==='Prompt'?'selected':''}>Prompt</option>
+              <option value="Chakra Petch" ${item.font==='Chakra Petch'?'selected':''}>Chakra Petch</option>
+              <option value="Sarabun" ${item.font==='Sarabun'?'selected':''}>Sarabun</option>
+            </select>
+            <input type="range" min="10" max="100" value="${item.size}" oninput="updateTextProp(${idx}, 'size', parseInt(this.value))" class="w-full">
+            <input type="color" value="${item.color}" oninput="updateTextProp(${idx}, 'color', this.value)" class="w-full h-6 p-0 border rounded cursor-pointer">
+          </div>
+        `;
+        container.appendChild(itemBox);
+      });
+    }
+
+    function updateTextProp(idx, prop, val) {
+      if (textItems[idx]) {
+        textItems[idx][prop] = val;
+        renderCanvas();
+      }
+    }
+
+    function removeTextItem(idx) {
+      textItems.splice(idx, 1);
+      activeTextIndex = textItems.length > 0 ? textItems.length - 1 : -1;
+      renderTextItemsUI();
+      renderCanvas();
+    }
+
+    document.getElementById('logoScaleSlider').addEventListener('input', (e) => {
+      if (activeCanvasLogoIndex !== -1) {
+        canvasLogos[activeCanvasLogoIndex].scale = e.target.value / 100;
+        renderCanvas();
+      }
+    });
+
+    document.getElementById('logoOpacitySlider').addEventListener('input', (e) => {
+      if (activeCanvasLogoIndex !== -1) {
+        const val = e.target.value / 100;
+        canvasLogos[activeCanvasLogoIndex].opacity = val;
+        document.getElementById('opacityVal').innerText = e.target.value;
+        renderCanvas();
+      }
+    });
+
+    document.getElementById('logoFrameSelect').addEventListener('change', (e) => {
+      if (activeCanvasLogoIndex !== -1) {
+        canvasLogos[activeCanvasLogoIndex].frame = e.target.value;
+        renderCanvas();
+      }
+    });
+
+    document.getElementById('logoStrokeStyleSelect').addEventListener('change', (e) => {
+      if (activeCanvasLogoIndex !== -1) {
+        canvasLogos[activeCanvasLogoIndex].strokeStyle = e.target.value;
+        renderCanvas();
+      }
+    });
+
+    document.getElementById('logoStrokeWidthSlider').addEventListener('input', (e) => {
+      if (activeCanvasLogoIndex !== -1) {
+        canvasLogos[activeCanvasLogoIndex].strokeWidth = parseInt(e.target.value);
+        renderCanvas();
+      }
+    });
+
+    document.getElementById('logoStrokeColorPicker').addEventListener('input', (e) => {
+      if (activeCanvasLogoIndex !== -1) {
+        canvasLogos[activeCanvasLogoIndex].strokeColor = e.target.value;
+        renderCanvas();
+      }
+    });
+
+    document.getElementById('brightnessSlider').addEventListener('input', (e) => {
+      brightness = e.target.value;
+      renderCanvas();
+    });
+
+    function setAspectRatio(ratio) {
+      currentAspect = ratio;
+      renderCanvas();
+    }
+
+    function renderCanvasForImage(photoIndex) {
+      if (uploadedPhotos.length === 0 || !uploadedPhotos[photoIndex]) return null;
+      const baseImg = uploadedPhotos[photoIndex];
+
+      let targetW = baseImg.naturalWidth || baseImg.width;
+      let targetH = baseImg.naturalHeight || baseImg.height;
+
+      if (currentAspect !== 'original') {
+        if (targetW / targetH > currentAspect) {
+          targetW = targetH * currentAspect;
+        } else {
+          targetH = targetW / currentAspect;
+        }
+      }
+
+      const tempCanvas = document.createElement('canvas');
+      tempCanvas.width = targetW;
+      tempCanvas.height = targetH;
+      const tempCtx = tempCanvas.getContext('2d');
+
+      tempCtx.filter = `brightness(${brightness}%)`;
+      const cropX = ((baseImg.naturalWidth || baseImg.width) - targetW) / 2;
+      const cropY = ((baseImg.naturalHeight || baseImg.height) - targetH) / 2;
+      tempCtx.drawImage(baseImg, cropX, cropY, targetW, targetH, 0, 0, targetW, targetH);
+      tempCtx.filter = 'none';
+
+      if (tilingState.enabled) {
+        tempCtx.save();
+        tempCtx.globalAlpha = tilingState.opacity;
+        tempCtx.translate(targetW / 2, targetH / 2);
+        tempCtx.rotate((tilingState.rotate * Math.PI) / 180);
+        tempCtx.translate(-targetW / 2, -targetH / 2);
+
+        if (tilingState.type === 'text' && tilingState.text.trim() !== '') {
+          const fontPx = Math.max(14, Math.round((tilingState.textSize / 1000) * targetW));
+          tempCtx.font = `bold ${fontPx}px 'Kanit', sans-serif`;
+          tempCtx.fillStyle = tilingState.textColor;
+          tempCtx.textAlign = 'center';
+          tempCtx.textBaseline = 'middle';
+
+          const textMetrics = tempCtx.measureText(tilingState.text);
+          const tw = textMetrics.width;
+          const gapX = tw + (tilingState.gap * (targetW / 1000));
+          const gapY = fontPx * 3.5;
+
+          for (let x = -targetW; x < targetW * 2; x += gapX) {
+            for (let y = -targetH; y < targetH * 2; y += gapY) {
+              tempCtx.fillText(tilingState.text, x, y);
+            }
+          }
+        } else if (tilingState.type === 'image' && tilingState.img) {
+          const tScale = 0.15;
+          const tw = targetW * tScale;
+          const th = (tilingState.img.naturalHeight / tilingState.img.naturalWidth) * tw;
+          const gap = (tilingState.gap / 100) * tw;
+
+          for (let x = -targetW; x < targetW * 2; x += tw + gap) {
+            for (let y = -targetH; y < targetH * 2; y += th + gap) {
+              tempCtx.drawImage(tilingState.img, x, y, tw, th);
+            }
+          }
+        }
+        tempCtx.restore();
+      }
+
+      canvasLogos.forEach((item, idx) => {
+        const logoImg = loadedLogoImgs[item.imgIndex];
+        if (!logoImg) return;
+
+        const lWidth = targetW * item.scale;
+        const lHeight = (logoImg.naturalHeight / logoImg.naturalWidth) * lWidth;
+        const lx = (item.x / 100) * (targetW - lWidth);
+        const ly = (item.y / 100) * (targetH - lHeight);
+
+        tempCtx.save();
+        tempCtx.globalAlpha = item.opacity;
+
+        if (item.strokeStyle && item.strokeStyle !== 'none') {
+          tempCtx.save();
+          tempCtx.strokeStyle = item.strokeColor || '#ffffff';
+          tempCtx.lineWidth = Math.max(2, (item.strokeWidth || 4) * (targetW / 1000));
+
+          if (item.strokeStyle === 'dashed') {
+            tempCtx.setLineDash([12, 6]);
+          } else if (item.strokeStyle === 'dotted') {
+            tempCtx.setLineDash([3, 6]);
+          }
+
+          if (item.frame === 'circle') {
+            tempCtx.beginPath();
+            tempCtx.arc(lx + lWidth / 2, ly + lHeight / 2, Math.min(lWidth, lHeight) / 2, 0, Math.PI * 2);
+            tempCtx.stroke();
+          } else if (item.frame === 'oval') {
+            tempCtx.beginPath();
+            tempCtx.ellipse(lx + lWidth / 2, ly + lHeight / 2, lWidth / 2, lHeight / 2, 0, 0, Math.PI * 2);
+            tempCtx.stroke();
+          } else {
+            tempCtx.strokeRect(lx, ly, lWidth, lHeight);
+          }
+          tempCtx.restore();
+        }
+
+        if (item.frame === 'circle') {
+          tempCtx.beginPath();
+          tempCtx.arc(lx + lWidth / 2, ly + lHeight / 2, Math.min(lWidth, lHeight) / 2, 0, Math.PI * 2);
+          tempCtx.closePath();
+          tempCtx.clip();
+        } else if (item.frame === 'oval') {
+          tempCtx.beginPath();
+          tempCtx.ellipse(lx + lWidth / 2, ly + lHeight / 2, lWidth / 2, lHeight / 2, 0, 0, Math.PI * 2);
+          tempCtx.closePath();
+          tempCtx.clip();
+        }
+
+        tempCtx.drawImage(logoImg, lx, ly, lWidth, lHeight);
+        tempCtx.restore();
+
+        if (photoIndex === currentPhotoIndex && idx === activeCanvasLogoIndex) {
+          tempCtx.strokeStyle = '#2563eb';
+          tempCtx.lineWidth = Math.max(2, targetW * 0.003);
+          tempCtx.strokeRect(lx - 2, ly - 2, lWidth + 4, lHeight + 4);
+        }
+      });
+
+      textItems.forEach((tItem, tIdx) => {
+        if (!tItem.text || tItem.text.trim() === '') return;
+
+        tempCtx.save();
+        const fontPx = Math.max(12, Math.round((tItem.size / 1000) * targetW));
+        tempCtx.font = `bold ${fontPx}px '${tItem.font || 'Kanit'}', sans-serif`;
+        tempCtx.fillStyle = tItem.color || '#ffffff';
+        tempCtx.textAlign = 'center';
+        tempCtx.textBaseline = 'middle';
+
+        tempCtx.shadowColor = 'rgba(0,0,0,0.8)';
+        tempCtx.shadowBlur = 6;
+        tempCtx.shadowOffsetX = 2;
+        tempCtx.shadowOffsetY = 2;
+
+        const tx = (tItem.x / 100) * targetW;
+        const ty = (tItem.y / 100) * targetH;
+        tempCtx.fillText(tItem.text, tx, ty);
+        tempCtx.restore();
+
+        if (photoIndex === currentPhotoIndex && tIdx === activeTextIndex) {
+          tempCtx.strokeStyle = '#3b82f6';
+          tempCtx.lineWidth = 2;
+          const textMetrics = tempCtx.measureText(tItem.text);
+          const tw = textMetrics.width + 10;
+          const th = fontPx + 10;
+          tempCtx.strokeRect(tx - tw / 2, ty - th / 2, tw, th);
+        }
+      });
+
+      return tempCanvas;
+    }
+
+    function renderCanvas() {
+      const rendered = renderCanvasForImage(currentPhotoIndex);
+      if (!rendered) return;
+      canvas.width = rendered.width;
+      canvas.height = rendered.height;
+      ctx.drawImage(rendered, 0, 0);
+      updateFileSizeEstimate();
+    }
+
+    function getPointerPos(e) {
+      const rect = canvas.getBoundingClientRect();
+      const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+      const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+      return {
+        x: (clientX - rect.left) / rect.width * 100,
+        y: (clientY - rect.top) / rect.height * 100
+      };
+    }
+
+    canvas.addEventListener('mousedown', startDrag);
+    canvas.addEventListener('touchstart', startDrag);
+    window.addEventListener('mousemove', drag);
+    window.addEventListener('touchmove', drag);
+    window.addEventListener('mouseup', endDrag);
+    window.addEventListener('touchend', endDrag);
+
+    function startDrag(e) {
+      isDragging = true;
+      dragStart = getPointerPos(e);
+    }
+
+    function drag(e) {
+      if (!isDragging) return;
+      const currentPos = getPointerPos(e);
+      const dx = currentPos.x - dragStart.x;
+      const dy = currentPos.y - dragStart.y;
+
+      if (activeCanvasLogoIndex !== -1 && canvasLogos[activeCanvasLogoIndex]) {
+        const item = canvasLogos[activeCanvasLogoIndex];
+        item.x = Math.max(0, Math.min(100, item.x + dx));
+        item.y = Math.max(0, Math.min(100, item.y + dy));
+      } else if (activeTextIndex !== -1 && textItems[activeTextIndex]) {
+        const tItem = textItems[activeTextIndex];
+        tItem.x = Math.max(0, Math.min(100, tItem.x + dx));
+        tItem.y = Math.max(0, Math.min(100, tItem.y + dy));
+      }
+
+      dragStart = currentPos;
+      renderCanvas();
+    }
+
+    function endDrag() { isDragging = false; }
+
+    const exportFormatSelect = document.getElementById('exportFormat');
+    const jpegSettingsGroup = document.getElementById('jpegSettingsGroup');
+    const jpegQualityInput = document.getElementById('jpegQuality');
+    const jpegResolutionSelect = document.getElementById('jpegResolution');
+
+    exportFormatSelect.addEventListener('change', (e) => {
+      jpegSettingsGroup.classList.toggle('hidden', e.target.value !== 'image/jpeg');
+      renderCanvas();
+    });
+
+    jpegQualityInput.addEventListener('input', (e) => {
+      document.getElementById('qualityVal').innerText = e.target.value;
+      renderCanvas();
+    });
+
+    jpegResolutionSelect.addEventListener('change', () => { renderCanvas(); });
+
+    function getFinalCanvas(sourceCanvas) {
+      const format = exportFormatSelect.value;
+      let finalCanvas = sourceCanvas;
+
+      if (format === 'image/jpeg') {
+        const scale = parseFloat(jpegResolutionSelect.value);
+        if (scale !== 1.0) {
+          const scaledCanvas = document.createElement('canvas');
+          scaledCanvas.width = sourceCanvas.width * scale;
+          scaledCanvas.height = sourceCanvas.height * scale;
+          const sCtx = scaledCanvas.getContext('2d');
+          sCtx.drawImage(sourceCanvas, 0, 0, scaledCanvas.width, scaledCanvas.height);
+          finalCanvas = scaledCanvas;
+        }
+      }
+      return finalCanvas;
+    }
+
+    function updateFileSizeEstimate() {
+      if (uploadedPhotos.length === 0) return;
+      const format = exportFormatSelect.value;
+      const quality = format === 'image/jpeg' ? jpegQualityInput.value / 100 : 1.0;
+      const targetCanvas = getFinalCanvas(canvas);
+
+      const dataUrl = targetCanvas.toDataURL(format, quality);
+      const head = `data:${format};base64,`;
+      const sizeInBytes = Math.round((dataUrl.length - head.length) * 3 / 4);
+
+      let sizeStr = '';
+      if (sizeInBytes >= 1024 * 1024) {
+        sizeStr = (sizeInBytes / (1024 * 1024)).toFixed(2) + ' MB';
+      } else {
+        sizeStr = (sizeInBytes / 1024).toFixed(1) + ' KB';
+      }
+      document.getElementById('fileSizeEst').innerText = sizeStr;
+    }
+
+    document.getElementById('downloadBtn').addEventListener('click', () => {
+      if (uploadedPhotos.length === 0) {
+        alert('กรุณาอัปโหลดรูปภาพก่อนส่งออก');
+        return;
+      }
+      const format = exportFormatSelect.value;
+      const quality = format === 'image/jpeg' ? jpegQualityInput.value / 100 : 1.0;
+      const targetCanvas = getFinalCanvas(canvas);
+
+      const dataUrl = targetCanvas.toDataURL(format, quality);
+      const link = document.createElement('a');
+      const ext = format === 'image/png' ? 'png' : 'jpg';
+      link.download = `watermark_photo_${Date.now()}.${ext}`;
+      link.href = dataUrl;
+      link.click();
+    });
+
+    document.getElementById('downloadZipBtn').addEventListener('click', async () => {
+      if (uploadedPhotos.length === 0) {
+        alert('กรุณาอัปโหลดรูปภาพก่อนส่งออก');
+        return;
+      }
+
+      const zip = new JSZip();
+      const format = exportFormatSelect.value;
+      const quality = format === 'image/jpeg' ? jpegQualityInput.value / 100 : 1.0;
+      const ext = format === 'image/png' ? 'png' : 'jpg';
+
+      for (let i = 0; i < uploadedPhotos.length; i++) {
+        const rawCanvas = renderCanvasForImage(i);
+        const finalCanvas = getFinalCanvas(rawCanvas);
+        const dataUrl = finalCanvas.toDataURL(format, quality);
+        const base64Data = dataUrl.replace(/^data:image\/(png|jpeg);base64,/, "");
+        zip.file(`edited_photo_${i + 1}.${ext}`, base64Data, { base64: true });
+      }
+
+      const content = await zip.generateAsync({ type: "blob" });
+      saveAs(content, `batch_watermarked_photos_${Date.now()}.zip`);
+    });
+
+    loadLogosFromStorage();
+  </script>
+</body>
+</html>
