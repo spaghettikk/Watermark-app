@@ -263,16 +263,21 @@
           <!-- Image Crop & Brightness -->
           <div class="space-y-3 lg:space-y-4 pt-3 lg:pt-4 border-t dark:border-gray-700">
             <div>
-              <label class="text-xs font-medium text-gray-600 dark:text-gray-300 lg:text-sm">ปรับความสว่างภาพหลัก</label>
+              <div class="flex justify-between items-center">
+                <label class="text-xs font-medium text-gray-600 dark:text-gray-300 lg:text-sm">ปรับความสว่างภาพหลัก</label>
+                <span id="brightnessVal" class="text-xs font-bold text-blue-600 dark:text-blue-400">100%</span>
+              </div>
               <input type="range" id="brightnessSlider" min="50" max="150" value="100" class="w-full mt-1 lg:mt-1.5">
             </div>
             <div>
               <label class="text-xs font-medium text-gray-600 dark:text-gray-300 lg:text-sm">อัตราส่วนภาพ (Crop)</label>
-              <div class="grid grid-cols-4 gap-2 mt-1 lg:gap-3 lg:mt-2">
-                <button onclick="setAspectRatio('original')" class="px-2 py-1 lg:p-2 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 text-xs lg:text-sm rounded border dark:border-gray-600 transition-colors">Original</button>
-                <button onclick="setAspectRatio(1)" class="px-2 py-1 lg:p-2 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 text-xs lg:text-sm rounded border dark:border-gray-600 transition-colors">1:1</button>
-                <button onclick="setAspectRatio(4/5)" class="px-2 py-1 lg:p-2 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 text-xs lg:text-sm rounded border dark:border-gray-600 transition-colors">4:5</button>
-                <button onclick="setAspectRatio(16/9)" class="px-2 py-1 lg:p-2 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 text-xs lg:text-sm rounded border dark:border-gray-600 transition-colors">16:9</button>
+              <div class="grid grid-cols-3 sm:grid-cols-6 gap-1.5 mt-1 lg:gap-2 lg:mt-2">
+                <button onclick="setAspectRatio('original')" class="px-2 py-1 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 text-xs rounded border dark:border-gray-600 transition-colors">Original</button>
+                <button onclick="setAspectRatio(1)" class="px-2 py-1 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 text-xs rounded border dark:border-gray-600 transition-colors">1:1</button>
+                <button onclick="setAspectRatio(4/3)" class="px-2 py-1 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 text-xs rounded border dark:border-gray-600 transition-colors">4:3</button>
+                <button onclick="setAspectRatio(4/5)" class="px-2 py-1 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 text-xs rounded border dark:border-gray-600 transition-colors">4:5</button>
+                <button onclick="setAspectRatio(16/9)" class="px-2 py-1 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 text-xs rounded border dark:border-gray-600 transition-colors">16:9</button>
+                <button onclick="setAspectRatio(9/16)" class="px-2 py-1 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 text-xs rounded border dark:border-gray-600 transition-colors">9:16</button>
               </div>
             </div>
           </div>
@@ -849,7 +854,6 @@
       renderCanvas();
     });
 
-    // เพิ่มข้อความเริ่มต้นเป็นช่องว่างเปล่า
     document.getElementById('addTextBtn').addEventListener('click', () => {
       textItems.push({
         text: '',
@@ -866,7 +870,6 @@
       renderCanvas();
     });
 
-    // ปรับปรุง UI ข้อความ แก้ปัญหาหลุดโฟกัสตอนพิมพ์
     function renderTextItemsUI() {
       const container = document.getElementById('textItemsList');
       container.innerHTML = '';
@@ -903,7 +906,6 @@
         `;
         container.appendChild(itemBox);
 
-        // ดัก Event input ตรงเพื่อให้อัปเดต Canvas โดยไม่ต้อง re-render ทั้ง HTML
         const inputEl = document.getElementById(`textInput_${idx}`);
         if (inputEl) {
           inputEl.addEventListener('input', (e) => {
@@ -969,10 +971,12 @@
       }
     });
 
+    // ปรับความสว่างภาพหลักด้วยการคำนวณ Pixel เสมือนจริง รองรับเบราว์เซอร์มือถือ 100%
     const brightnessSliderEl = document.getElementById('brightnessSlider');
     if (brightnessSliderEl) {
       brightnessSliderEl.addEventListener('input', (e) => {
-        brightness = e.target.value;
+        brightness = parseInt(e.target.value);
+        document.getElementById('brightnessVal').innerText = `${brightness}%`;
         renderCanvas();
       });
     }
@@ -1015,9 +1019,21 @@
       const targetW = sourceW;
       const targetH = sourceH;
 
-      tempCtx.filter = `brightness(${brightness}%)`;
+      // วาดรูปต้นฉบับลงบน Canvas ชั่วคราว
       tempCtx.drawImage(baseImg, sourceX, sourceY, sourceW, sourceH, 0, 0, targetW, targetH);
-      tempCtx.filter = 'none';
+
+      // ประมวลผลปรับความสว่างพิกเซลโดยตรง เพื่อแก้บั๊กมือถือไม่ทำงาน
+      if (brightness !== 100) {
+        const imgData = tempCtx.getImageData(0, 0, targetW, targetH);
+        const data = imgData.data;
+        const factor = brightness / 100;
+        for (let i = 0; i < data.length; i += 4) {
+          data[i] = Math.min(255, data[i] * factor);
+          data[i + 1] = Math.min(255, data[i + 1] * factor);
+          data[i + 2] = Math.min(255, data[i + 2] * factor);
+        }
+        tempCtx.putImageData(imgData, 0, 0);
+      }
 
       if (tilingState.enabled) {
         tempCtx.save();
