@@ -340,36 +340,36 @@
     </section>
 
     <!-- Footer -->
-    <footer class="mt-12 mb-6 lg:mt-16 border-t border-gray-200 dark:border-gray-800 pt-8 transition-colors lg:pt-10">
-      <div class="max-w-md mx-auto bg-gradient-to-br from-amber-50/80 via-orange-50/50 to-amber-100/60 dark:from-gray-800 dark:via-gray-800/90 dark:to-gray-800/50 backdrop-blur-md p-6 rounded-2xl border border-amber-200/60 dark:border-gray-700 shadow-sm text-center space-y-4 lg:space-y-5 lg:p-8">
+    <!-- Footer (ฉบับย่อยขนาดประหยัดพื้นที่) -->
+    <footer class="mt-8 mb-4 border-t border-gray-200 dark:border-gray-800 pt-6 transition-colors">
+      <div class="max-w-xs mx-auto bg-gradient-to-br from-amber-50/80 via-orange-50/50 to-amber-100/60 dark:from-gray-800 dark:via-gray-800/90 dark:to-gray-800/50 backdrop-blur-md p-4 rounded-xl border border-amber-200/60 dark:border-gray-700 shadow-sm text-center space-y-2.5">
         
-        <div class="flex items-center justify-center gap-2 text-amber-900 dark:text-amber-400 font-bold text-base md:text-lg lg:text-2xl">
-          <span class="text-2xl lg:text-3xl">☕</span>
+        <div class="flex items-center justify-center gap-1.5 text-amber-900 dark:text-amber-400 font-bold text-sm lg:text-base">
+          <span class="text-lg">☕</span>
           <span>เลี้ยงกาแฟผู้พัฒนา</span>
         </div>
 
-        <p class="text-xs md:text-sm lg:text-base text-gray-600 dark:text-gray-300 font-normal leading-relaxed">
-          หากมีประโยชน์กับท่าน สามารถสแกนชำระเงินผ่าน QR Code ด้านล่างเพื่อสนับสนุนทางผู้จัดได้เลยนะคะ
+        <p class="text-[11px] lg:text-xs text-gray-600 dark:text-gray-300 font-normal leading-tight">
+          หากมีประโยชน์ สามารถสแกนชำระเงินผ่าน QR Code เพื่อสนับสนุนผู้จัดได้เลยนะคะ
         </p>
 
-        <div class="pt-2 flex flex-col items-center justify-center">
-          <div class="relative group cursor-pointer bg-white dark:bg-gray-900 p-3 lg:p-4 rounded-2xl border border-amber-200 dark:border-gray-700 shadow-md hover:shadow-lg transition-all duration-300 hover:scale-105" onclick="openQrModal()">
-            <div class="w-44 h-44 lg:w-56 lg:h-56 overflow-hidden rounded-xl bg-white flex items-center justify-center border transition-all">
-              <img id="qrImgThumb" src="images/qrcode.png" alt="QR Code" class="w-[125%] h-[125%] max-w-none object-cover object-center translate-y-[-2%]" onerror="handleQrError(this)">
+        <div class="pt-1 flex flex-col items-center justify-center">
+          <div class="relative group cursor-pointer bg-white dark:bg-gray-900 p-2 rounded-xl border border-amber-200 dark:border-gray-700 shadow-sm hover:shadow transition-all duration-300 hover:scale-105" onclick="openQrModal()">
+            <div class="w-28 h-28 lg:w-36 lg:h-36 overflow-hidden rounded-lg bg-white flex items-center justify-center border transition-all">
+              <img id="qrImgThumb" src="images/qrcode.png" alt="QR Code" class="w-[120%] h-[120%] max-w-none object-cover object-center" onerror="handleQrError(this)">
             </div>
-            <div class="absolute inset-0 bg-black/40 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white text-xs lg:text-sm font-medium backdrop-blur-[2px]">
-              🔍 คลิกเพื่อขยายใหญ่
+            <div class="absolute inset-0 bg-black/40 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white text-[10px] font-medium backdrop-blur-[1px]">
+              🔍 ขยายใหญ่
             </div>
           </div>
-          <span class="text-[11px] lg:text-sm text-gray-400 dark:text-gray-500 mt-2">สแกนผ่านแอปธนาคารใดก็ได้</span>
+          <span class="text-[10px] text-gray-400 dark:text-gray-500 mt-1">สแกนผ่านแอปธนาคารใดก็ได้</span>
         </div>
 
-        <div class="pt-2 border-t border-amber-200/40 dark:border-gray-700/60 text-[11px] lg:text-sm text-gray-500 dark:text-gray-400">
+        <div class="pt-1.5 border-t border-amber-200/40 dark:border-gray-700/60 text-[10px] text-gray-500 dark:text-gray-400">
           ขอบคุณทุกการซัพพอร์ตและกำลังใจค่ะ ❤️
         </div>
       </div>
     </footer>
-
   </main>
 
   <!-- Modal QR Code -->
