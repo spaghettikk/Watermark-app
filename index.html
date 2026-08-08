@@ -964,7 +964,6 @@
       renderCanvas();
     }
 
-    // เพิ่ม Parameter forExport เพื่อสลับโหมดซ่อน Selection Focus Box ขณะส่งออก
     function renderCanvasForImage(photoIndex, forExport = false) {
       if (uploadedPhotos.length === 0 || !uploadedPhotos[photoIndex]) return null;
       const baseImg = uploadedPhotos[photoIndex];
@@ -1055,7 +1054,6 @@
 
         const activeShape = item.shape || 'none';
 
-        // สร้าง Path รูปทรงสำหรับการครอบภาพและวาดเส้นขอบ
         tempCtx.beginPath();
         if (activeShape === 'circle') {
           tempCtx.arc(lx + lWidth / 2, ly + lHeight / 2, Math.min(lWidth, lHeight) / 2, 0, Math.PI * 2);
@@ -1072,7 +1070,6 @@
         }
         tempCtx.closePath();
 
-        // 1. ครอบตัดรูปภาพตามรูปทรงที่เลือก
         tempCtx.save();
         if (activeShape && activeShape !== 'none') {
           tempCtx.clip();
@@ -1080,7 +1077,6 @@
         tempCtx.drawImage(logoImg, lx, ly, lWidth, lHeight);
         tempCtx.restore();
 
-        // 2. วาดเส้นขอบ (เฉพาะเมื่อเลือกประเภทที่ไม่ใช่ 'none')
         if (item.strokeStyle && item.strokeStyle !== 'none') {
           tempCtx.save();
           tempCtx.strokeStyle = item.strokeColor || '#ffffff';
@@ -1098,7 +1094,6 @@
 
         tempCtx.restore();
 
-        // วาดกรอบสีน้ำเงินแสดงสถานะเลือกวัตถุ เฉพาะตอนแสดงผลบนหน้าจอปรับแต่งเท่านั้น (ไม่วาดตอนส่งออก)
         if (!forExport && photoIndex === currentPhotoIndex && idx === activeCanvasLogoIndex) {
           tempCtx.strokeStyle = '#2563eb';
           tempCtx.lineWidth = Math.max(2, targetW * 0.003);
@@ -1227,6 +1222,7 @@
       return finalCanvas;
     }
 
+    // ปรับปรุงระบบประเมินขนาดไฟล์ให้ตรงตามไฟล์ Blob Binary จริง
     function updateFileSizeEstimate() {
       if (uploadedPhotos.length === 0) return;
       const format = exportFormatSelect.value;
@@ -1234,17 +1230,17 @@
       const cleanCanvas = renderCanvasForImage(currentPhotoIndex, true);
       const targetCanvas = getFinalCanvas(cleanCanvas);
 
-      const dataUrl = targetCanvas.toDataURL(format, quality);
-      const head = `data:${format};base64,`;
-      const sizeInBytes = Math.round((dataUrl.length - head.length) * 3 / 4);
-
-      let sizeStr = '';
-      if (sizeInBytes >= 1024 * 1024) {
-        sizeStr = (sizeInBytes / (1024 * 1024)).toFixed(2) + ' MB';
-      } else {
-        sizeStr = (sizeInBytes / 1024).toFixed(1) + ' KB';
-      }
-      document.getElementById('fileSizeEst').innerText = sizeStr;
+      targetCanvas.toBlob((blob) => {
+        if (!blob) return;
+        const sizeInBytes = blob.size;
+        let sizeStr = '';
+        if (sizeInBytes >= 1024 * 1024) {
+          sizeStr = (sizeInBytes / (1024 * 1024)).toFixed(2) + ' MB';
+        } else {
+          sizeStr = (sizeInBytes / 1024).toFixed(1) + ' KB';
+        }
+        document.getElementById('fileSizeEst').innerText = sizeStr;
+      }, format, quality);
     }
 
     document.getElementById('downloadBtn').addEventListener('click', () => {
@@ -1255,7 +1251,6 @@
       const format = exportFormatSelect.value;
       const quality = format === 'image/jpeg' ? jpegQualityInput.value / 100 : 1.0;
       
-      // ดึงภาพ Clean ที่ไม่มีกรอบสีน้ำเงินโดยส่ง forExport = true
       const cleanCanvas = renderCanvasForImage(currentPhotoIndex, true);
       const targetCanvas = getFinalCanvas(cleanCanvas);
 
@@ -1398,7 +1393,6 @@
       const ext = format === 'image/png' ? 'png' : 'jpg';
 
       for (let i = 0; i < uploadedPhotos.length; i++) {
-        // ส่ง forExport = true เพื่อให้ทุกไฟล์ภาพสะอาดไม่มีกรอบเลือก
         const rawCanvas = renderCanvasForImage(i, true);
         const finalCanvas = getFinalCanvas(rawCanvas);
         const dataUrl = finalCanvas.toDataURL(format, quality);
