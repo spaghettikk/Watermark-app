@@ -252,7 +252,7 @@
           <!-- Text Customization -->
           <div class="p-3 lg:p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg space-y-3 lg:space-y-4">
             <div class="flex justify-between items-center">
-              <span class="text-sm font-semibold lg:text-base">ข้อความ & สติ๊กเกอร์ Emoji</span>
+              <span class="text-sm font-semibold lg:text-base">ข้อความ</span>
               <button id="addTextBtn" class="text-xs lg:text-sm bg-blue-600 hover:bg-blue-700 text-white px-2 py-1 lg:px-4 lg:py-2 rounded lg:rounded-lg shadow transition-colors">
                 + เพิ่มข้อความ
               </button>
@@ -849,15 +849,16 @@
       renderCanvas();
     });
 
+    // เพิ่มข้อความเริ่มต้นเป็นช่องว่างเปล่า
     document.getElementById('addTextBtn').addEventListener('click', () => {
       textItems.push({
-        text: '✨ ข้อความ / ฿1,500',
+        text: '',
         font: 'Kanit',
         size: 35,
         color: '#ffffff',
         align: 'center',
         x: 50,
-        y: 80 + (textItems.length * 5)
+        y: 50 + (textItems.length * 5)
       });
       activeTextIndex = textItems.length - 1;
       activeCanvasLogoIndex = -1;
@@ -865,6 +866,7 @@
       renderCanvas();
     });
 
+    // ปรับปรุง UI ข้อความ แก้ปัญหาหลุดโฟกัสตอนพิมพ์
     function renderTextItemsUI() {
       const container = document.getElementById('textItemsList');
       container.innerHTML = '';
@@ -872,11 +874,14 @@
       textItems.forEach((item, idx) => {
         const itemBox = document.createElement('div');
         itemBox.className = `p-2.5 rounded-lg border text-xs space-y-2 ${idx === activeTextIndex ? 'border-blue-500 bg-blue-50/50 dark:bg-gray-700/80' : 'border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700'}`;
-        itemBox.onclick = () => {
-          activeTextIndex = idx;
-          activeCanvasLogoIndex = -1;
-          renderTextItemsUI();
-          renderCanvas();
+        
+        itemBox.onclick = (e) => {
+          if (e.target.tagName !== 'INPUT' && e.target.tagName !== 'SELECT' && e.target.tagName !== 'BUTTON') {
+            activeTextIndex = idx;
+            activeCanvasLogoIndex = -1;
+            renderTextItemsUI();
+            renderCanvas();
+          }
         };
 
         itemBox.innerHTML = `
@@ -884,7 +889,7 @@
             <span class="font-bold text-gray-700 dark:text-gray-200">ข้อความ #${idx + 1}</span>
             <button onclick="removeTextItem(${idx})" class="text-[10px] bg-red-500 text-white px-2 py-0.5 rounded transition-colors">ลบ</button>
           </div>
-          <input type="text" value="${item.text}" oninput="updateTextProp(${idx}, 'text', this.value)" placeholder="พิมพ์ข้อความ หรือ Emoji" class="w-full p-1.5 text-xs border rounded bg-white dark:bg-gray-800 dark:border-gray-600 transition-colors">
+          <input type="text" id="textInput_${idx}" value="${item.text}" placeholder="พิมพ์ข้อความที่นี่..." class="w-full p-1.5 text-xs border rounded bg-white dark:bg-gray-800 dark:border-gray-600 transition-colors">
           <div class="grid grid-cols-3 gap-1">
             <select onchange="updateTextProp(${idx}, 'font', this.value)" class="p-1 text-[11px] border rounded bg-white dark:bg-gray-800 transition-colors">
               <option value="Kanit" ${item.font==='Kanit'?'selected':''}>Kanit</option>
@@ -897,6 +902,19 @@
           </div>
         `;
         container.appendChild(itemBox);
+
+        // ดัก Event input ตรงเพื่อให้อัปเดต Canvas โดยไม่ต้อง re-render ทั้ง HTML
+        const inputEl = document.getElementById(`textInput_${idx}`);
+        if (inputEl) {
+          inputEl.addEventListener('input', (e) => {
+            textItems[idx].text = e.target.value;
+            renderCanvas();
+          });
+          inputEl.addEventListener('focus', () => {
+            activeTextIndex = idx;
+            activeCanvasLogoIndex = -1;
+          });
+        }
       });
     }
 
@@ -1242,7 +1260,6 @@
       }, format, quality);
     }
 
-    // ปรับปรุงการเซฟไฟล์ด้วย Web Share API ให้กดบันทึกเข้าอัลบั้มรูปถ่ายลงเครื่องได้ตรงๆ
     document.getElementById('downloadBtn').addEventListener('click', async () => {
       if (uploadedPhotos.length === 0) {
         alert('กรุณาอัปโหลดรูปภาพก่อนส่งออก');
@@ -1261,7 +1278,6 @@
         const fileName = `watermark_photo_${Date.now()}.${ext}`;
         const file = new File([blob], fileName, { type: format });
 
-        // 1. ลองใช้ Native Web Share API (สำหรับ iOS Chrome/Safari)
         if (navigator.canShare && navigator.canShare({ files: [file] })) {
           try {
             await navigator.share({
@@ -1274,19 +1290,14 @@
           }
         }
 
-        // 2. หากเบราว์เซอร์ไม่รองรับ Native Share ให้เปิดไฟล์ JPEG ตรงๆ บน tab ใหม่เพื่อกดบันทึกรูป
-        const dataUrl = targetCanvas.toDataURL(format, quality);
-        const imgWindow = window.open();
-        if (imgWindow) {
-          imgWindow.document.write(`<img src="${dataUrl}" style="max-width:100%; height:auto;" alt="Watermarked JPEG" />`);
-          imgWindow.document.title = fileName;
-        } else {
-          // 3. ปุ่มสำรอง Download Link สำหรับ Desktop
-          const link = document.createElement('a');
-          link.href = dataUrl;
-          link.download = fileName;
-          link.click();
-        }
+        const link = document.createElement('a');
+        const blobUrl = URL.createObjectURL(blob);
+        link.href = blobUrl;
+        link.download = fileName;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        setTimeout(() => URL.revokeObjectURL(blobUrl), 10000);
       }, format, quality);
     });
 
