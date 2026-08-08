@@ -1222,7 +1222,7 @@
       return finalCanvas;
     }
 
-    // ปรับปรุงระบบประเมินขนาดไฟล์ให้ตรงตามไฟล์ Blob Binary จริง
+    // คำนวณประเมินขนาดไฟล์จาก Blob สเกลจริง
     function updateFileSizeEstimate() {
       if (uploadedPhotos.length === 0) return;
       const format = exportFormatSelect.value;
@@ -1243,6 +1243,7 @@
       }, format, quality);
     }
 
+    // ปรับปรุงการส่งไฟล์บน iOS ให้เซฟเป็นไฟล์รูปภาพ JPEG/PNG แบบตรงตาม MIME Type ป้องกัน iOS บังคับแปลงเป็น PNG
     document.getElementById('downloadBtn').addEventListener('click', () => {
       if (uploadedPhotos.length === 0) {
         alert('กรุณาอัปโหลดรูปภาพก่อนส่งออก');
@@ -1250,135 +1251,135 @@
       }
       const format = exportFormatSelect.value;
       const quality = format === 'image/jpeg' ? jpegQualityInput.value / 100 : 1.0;
-      
+      const ext = format === 'image/png' ? 'png' : 'jpg';
+
       const cleanCanvas = renderCanvasForImage(currentPhotoIndex, true);
       const targetCanvas = getFinalCanvas(cleanCanvas);
 
-      const dataUrl = targetCanvas.toDataURL(format, quality);
-      
-      const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+      targetCanvas.toBlob((blob) => {
+        if (!blob) return;
 
-      if (isIOS) {
-        const newTab = window.open();
-        if (newTab) {
-          newTab.document.write(`
-            <!DOCTYPE html>
-            <html lang="th">
-              <head>
-                <meta charset="UTF-8">
-                <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-                <title>บันทึกรูปภาพ</title>
-                <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@400;600&display=swap" rel="stylesheet">
-                <style>
-                  * { box-sizing: border-box; margin: 0; padding: 0; }
-                  body { 
-                    background-color: #0f172a; 
-                    color: #ffffff; 
-                    font-family: 'Kanit', sans-serif; 
-                    min-height: 100vh;
-                    display: flex;
-                    flex-direction: column;
-                  }
-                  .top-bar {
-                    position: sticky;
-                    top: 0;
-                    z-index: 50;
-                    display: flex;
-                    align-items: center;
-                    justify-content: space-between;
-                    padding: 12px 16px;
-                    background: rgba(30, 41, 59, 0.85);
-                    backdrop-filter: blur(12px);
-                    -webkit-backdrop-filter: blur(12px);
-                    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-                  }
-                  .back-btn {
-                    display: inline-flex;
-                    align-items: center;
-                    gap: 6px;
-                    background: rgba(255, 255, 255, 0.12);
-                    color: #ffffff;
-                    border: 1px solid rgba(255, 255, 255, 0.2);
-                    padding: 6px 14px;
-                    border-radius: 20px;
-                    font-size: 14px;
-                    font-weight: 500;
-                    text-decoration: none;
-                    cursor: pointer;
-                    transition: all 0.2s ease;
-                  }
-                  .back-btn:active {
-                    background: rgba(255, 255, 255, 0.25);
-                    transform: scale(0.96);
-                  }
-                  .title-text {
-                    font-size: 15px;
-                    font-weight: 600;
-                    color: #f8fafc;
-                  }
-                  .container {
-                    flex: 1;
-                    display: flex;
-                    flex-direction: column;
-                    align-items: center;
-                    justify-content: center;
-                    padding: 20px 16px 40px;
-                    gap: 16px;
-                  }
-                  .img-card {
-                    max-width: 100%;
-                    border-radius: 16px;
-                    overflow: hidden;
-                    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5);
-                    border: 1px solid rgba(255, 255, 255, 0.1);
-                  }
-                  .img-card img {
-                    display: block;
-                    width: 100%;
-                    max-height: 70vh;
-                    object-fit: contain;
-                  }
-                  .instruction-box {
-                    background: rgba(30, 41, 59, 0.6);
-                    border: 1px solid rgba(59, 130, 246, 0.3);
-                    border-radius: 12px;
-                    padding: 12px 20px;
-                    text-align: center;
-                    font-size: 13px;
-                    color: #93c5fd;
-                    line-height: 1.5;
-                  }
-                </style>
-              </head>
-              <body>
-                <header class="top-bar">
-                  <button class="back-btn" onclick="window.close()">
-                    <span style="font-size: 16px;">‹</span> ย้อนกลับ
-                  </button>
-                  <span class="title-text">ตัวอย่างรูปภาพสำเร็จ</span>
-                  <div style="width: 70px;"></div>
-                </header>
-                <main class="container">
-                  <div class="img-card">
-                    <img src="${dataUrl}" alt="Watermarked Image">
-                  </div>
-                  <div class="instruction-box">
-                    💡 <b>แตะค้างที่รูปภาพ</b> แล้วเลือก <br><b>"บันทึกไปยัง 'รูปภาพ'" (Save to Photos)</b>
-                  </div>
-                </main>
-              </body>
-            </html>
-          `);
+        const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+
+        if (isIOS) {
+          const blobUrl = URL.createObjectURL(blob);
+          const newTab = window.open();
+          if (newTab) {
+            newTab.document.write(`
+              <!DOCTYPE html>
+              <html lang="th">
+                <head>
+                  <meta charset="UTF-8">
+                  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+                  <title>บันทึกรูปภาพ (${ext.toUpperCase()})</title>
+                  <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@400;600&display=swap" rel="stylesheet">
+                  <style>
+                    * { box-sizing: border-box; margin: 0; padding: 0; }
+                    body { 
+                      background-color: #0f172a; 
+                      color: #ffffff; 
+                      font-family: 'Kanit', sans-serif; 
+                      min-height: 100vh;
+                      display: flex;
+                      flex-direction: column;
+                    }
+                    .top-bar {
+                      position: sticky;
+                      top: 0;
+                      z-index: 50;
+                      display: flex;
+                      align-items: center;
+                      justify-content: space-between;
+                      padding: 12px 16px;
+                      background: rgba(30, 41, 59, 0.85);
+                      backdrop-filter: blur(12px);
+                      -webkit-backdrop-filter: blur(12px);
+                      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+                    }
+                    .back-btn {
+                      display: inline-flex;
+                      align-items: center;
+                      gap: 6px;
+                      background: rgba(255, 255, 255, 0.12);
+                      color: #ffffff;
+                      border: 1px solid rgba(255, 255, 255, 0.2);
+                      padding: 6px 14px;
+                      border-radius: 20px;
+                      font-size: 14px;
+                      font-weight: 500;
+                      text-decoration: none;
+                      cursor: pointer;
+                      transition: all 0.2s ease;
+                    }
+                    .back-btn:active {
+                      background: rgba(255, 255, 255, 0.25);
+                      transform: scale(0.96);
+                    }
+                    .title-text {
+                      font-size: 15px;
+                      font-weight: 600;
+                      color: #f8fafc;
+                    }
+                    .container {
+                      flex: 1;
+                      display: flex;
+                      flex-direction: column;
+                      align-items: center;
+                      justify-content: center;
+                      padding: 20px 16px 40px;
+                      gap: 16px;
+                    }
+                    .img-card {
+                      max-width: 100%;
+                      border-radius: 16px;
+                      overflow: hidden;
+                      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5);
+                      border: 1px solid rgba(255, 255, 255, 0.1);
+                    }
+                    .img-card img {
+                      display: block;
+                      width: 100%;
+                      max-height: 70vh;
+                      object-fit: contain;
+                    }
+                    .instruction-box {
+                      background: rgba(30, 41, 59, 0.6);
+                      border: 1px solid rgba(59, 130, 246, 0.3);
+                      border-radius: 12px;
+                      padding: 12px 20px;
+                      text-align: center;
+                      font-size: 13px;
+                      color: #93c5fd;
+                      line-height: 1.5;
+                    }
+                  </style>
+                </head>
+                <body>
+                  <header class="top-bar">
+                    <button class="back-btn" onclick="window.close()">
+                      <span style="font-size: 16px;">‹</span> ย้อนกลับ
+                    </button>
+                    <span class="title-text">ตัวอย่างรูปภาพสำเร็จ (${ext.toUpperCase()})</span>
+                    <div style="width: 70px;"></div>
+                  </header>
+                  <main class="container">
+                    <div class="img-card">
+                      <img src="${blobUrl}" alt="Watermarked Image">
+                    </div>
+                    <div class="instruction-box">
+                      💡 <b>แตะค้างที่รูปภาพ</b> แล้วเลือก <br><b>"บันทึกไปยัง 'รูปภาพ'" (Save to Photos)</b>
+                    </div>
+                  </main>
+                </body>
+              </html>
+            `);
+          } else {
+            alert('กรุณาอนุญาตการเปิด Pop-up ใน Safari เพื่อบันทึกรูปภาพ');
+          }
         } else {
-          alert('กรุณาอนุญาตการเปิด Pop-up ใน Safari เพื่อบันทึกรูปภาพ');
+          saveAs(blob, `watermark_photo_${Date.now()}.${ext}`);
         }
-      } else {
-        const link = document.createElement('a');
-        const ext = format === 'image/png' ? 'png' : 'jpg';
-        link.download = `watermark_photo_${Date.now()}.${ext}`;
-        link.href = dataUrl;
-        link.click();
-      }
+      }, format, quality);
     });
 
     document.getElementById('downloadZipBtn').addEventListener('click', async () => {
@@ -1395,9 +1396,15 @@
       for (let i = 0; i < uploadedPhotos.length; i++) {
         const rawCanvas = renderCanvasForImage(i, true);
         const finalCanvas = getFinalCanvas(rawCanvas);
-        const dataUrl = finalCanvas.toDataURL(format, quality);
-        const base64Data = dataUrl.replace(/^data:image\/(png|jpeg);base64,/, "");
-        zip.file(`edited_photo_${i + 1}.${ext}`, base64Data, { base64: true });
+        
+        await new Promise((resolve) => {
+          finalCanvas.toBlob((blob) => {
+            if (blob) {
+              zip.file(`edited_photo_${i + 1}.${ext}`, blob);
+            }
+            resolve();
+          }, format, quality);
+        });
       }
 
       const content = await zip.generateAsync({ type: "blob" });
