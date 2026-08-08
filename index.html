@@ -514,19 +514,35 @@
       e.target.value = '';
     });
 
+    // ปรับปรุงฟังก์ชัน renderLogoGallery แก้ไขปัญหารูปในคลังโลโก้ไม่โชว์
     function renderLogoGallery() {
       const gallery = document.getElementById('logoGallery');
       const noLogoText = document.getElementById('noLogoText');
-      if (loadedLogoImgs.length > 0) noLogoText.style.display = 'none';
+      
+      if (!gallery) return;
+
+      if (loadedLogoImgs.length > 0) {
+        if (noLogoText) noLogoText.style.display = 'none';
+      } else {
+        if (noLogoText) noLogoText.style.display = 'block';
+      }
 
       gallery.innerHTML = '';
+      if (noLogoText && loadedLogoImgs.length === 0) {
+        gallery.appendChild(noLogoText);
+      }
+
       loadedLogoImgs.forEach((logo, index) => {
+        const imgSrc = (logo && logo.src) ? logo.src : storedLogos[index];
+        if (!imgSrc) return;
+
         const container = document.createElement('div');
         container.className = 'relative flex-shrink-0';
         
         const imgEl = document.createElement('img');
-        imgEl.src = logo.src;
-        imgEl.className = `h-12 w-12 object-contain border-2 rounded p-1 cursor-pointer ${index === selectedStorageLogoIndex ? 'border-blue-500 bg-blue-50 dark:bg-gray-700' : 'border-gray-200 dark:border-gray-600'}`;
+        imgEl.src = imgSrc;
+        imgEl.className = `h-12 w-12 object-contain border-2 rounded p-1 cursor-pointer bg-white dark:bg-gray-800 ${index === selectedStorageLogoIndex ? 'border-blue-500 ring-2 ring-blue-400' : 'border-gray-200 dark:border-gray-600'}`;
+        
         imgEl.onclick = () => {
           selectedStorageLogoIndex = index;
           renderLogoGallery();
@@ -534,7 +550,7 @@
 
         const delBtn = document.createElement('button');
         delBtn.innerHTML = '×';
-        delBtn.className = 'absolute -top-1 -right-1 bg-red-500 text-white rounded-full w-4 h-4 text-xs flex items-center justify-center';
+        delBtn.className = 'absolute -top-1 -right-1 bg-red-500 text-white rounded-full w-4 h-4 text-xs flex items-center justify-center hover:bg-red-600 shadow';
         delBtn.onclick = (e) => {
           e.stopPropagation();
           deleteLogoFromStorage(index);
@@ -544,6 +560,8 @@
         container.appendChild(delBtn);
         gallery.appendChild(container);
       });
+
+      renderCanvas();
     }
 
     function deleteLogoFromStorage(index) {
@@ -951,7 +969,6 @@
       }
     });
 
-    // ปรับปรุง Event Listener สไลเดอร์ความสว่าง
     const brightnessSliderEl = document.getElementById('brightnessSlider');
     if (brightnessSliderEl) {
       brightnessSliderEl.addEventListener('input', (e) => {
@@ -960,13 +977,12 @@
       });
     }
 
-    // ฟังก์ชันเปลี่ยนอัตราส่วนภาพ (Crop Ratio)
     function setAspectRatio(ratio) {
       currentAspect = ratio;
       renderCanvas();
     }
 
-    // ปรับปรุงการคำนวณการ Crop และความสว่างของภาพหลัก
+    // ปรับปรุงฟังก์ชัน renderCanvasForImage วาดเส้นขอบตามรูปทรงจริง (กลม/รี/เหลี่ยม)
     function renderCanvasForImage(photoIndex) {
       if (uploadedPhotos.length === 0 || !uploadedPhotos[photoIndex]) return null;
       const baseImg = uploadedPhotos[photoIndex];
@@ -1055,6 +1071,35 @@
         tempCtx.save();
         tempCtx.globalAlpha = item.opacity;
 
+        // คำนวณทรงโลโก้จาก shape หรือ frame
+        const activeShape = (item.shape && item.shape !== 'none') ? item.shape : item.frame;
+
+        // สร้าง Path รูปทรงสำหรับการตัดและวาดขอบ
+        tempCtx.beginPath();
+        if (activeShape === 'circle') {
+          tempCtx.arc(lx + lWidth / 2, ly + lHeight / 2, Math.min(lWidth, lHeight) / 2, 0, Math.PI * 2);
+        } else if (activeShape === 'oval') {
+          tempCtx.ellipse(lx + lWidth / 2, ly + lHeight / 2, lWidth / 2, lHeight / 2, 0, 0, Math.PI * 2);
+        } else if (activeShape === 'square') {
+          const side = Math.min(lWidth, lHeight);
+          tempCtx.rect(lx + (lWidth - side) / 2, ly + (lHeight - side) / 2, side, side);
+        } else if (activeShape === 'rounded') {
+          const radius = Math.min(lWidth, lHeight) * 0.15;
+          tempCtx.roundRect(lx, ly, lWidth, lHeight, radius);
+        } else {
+          tempCtx.rect(lx, ly, lWidth, lHeight);
+        }
+        tempCtx.closePath();
+
+        // 1. ครอบตัดและวาดรูปโลโก้
+        tempCtx.save();
+        if (activeShape && activeShape !== 'none') {
+          tempCtx.clip();
+        }
+        tempCtx.drawImage(logoImg, lx, ly, lWidth, lHeight);
+        tempCtx.restore();
+
+        // 2. วาดเส้นขอบ (Stroke) ทับรูปทรงจริง
         if (item.strokeStyle && item.strokeStyle !== 'none') {
           tempCtx.save();
           tempCtx.strokeStyle = item.strokeColor || '#ffffff';
@@ -1066,52 +1111,13 @@
             tempCtx.setLineDash([3, 6]);
           }
 
-          if (item.frame === 'circle') {
-            tempCtx.beginPath();
-            tempCtx.arc(lx + lWidth / 2, ly + lHeight / 2, Math.min(lWidth, lHeight) / 2, 0, Math.PI * 2);
-            tempCtx.stroke();
-          } else if (item.frame === 'oval') {
-            tempCtx.beginPath();
-            tempCtx.ellipse(lx + lWidth / 2, ly + lHeight / 2, lWidth / 2, lHeight / 2, 0, 0, Math.PI * 2);
-            tempCtx.stroke();
-          } else {
-            tempCtx.strokeRect(lx, ly, lWidth, lHeight);
-          }
+          tempCtx.stroke();
           tempCtx.restore();
         }
 
-        if (item.shape === 'circle') {
-          tempCtx.beginPath();
-          tempCtx.arc(lx + lWidth / 2, ly + lHeight / 2, Math.min(lWidth, lHeight) / 2, 0, Math.PI * 2);
-          tempCtx.closePath();
-          tempCtx.clip();
-        } else if (item.shape === 'square') {
-          tempCtx.beginPath();
-          const side = Math.min(lWidth, lHeight);
-          tempCtx.rect(lx + (lWidth - side) / 2, ly + (lHeight - side) / 2, side, side);
-          tempCtx.closePath();
-          tempCtx.clip();
-        } else if (item.shape === 'rounded') {
-          tempCtx.beginPath();
-          const radius = Math.min(lWidth, lHeight) * 0.15;
-          tempCtx.roundRect(lx, ly, lWidth, lHeight, radius);
-          tempCtx.closePath();
-          tempCtx.clip();
-        } else if (item.frame === 'circle') {
-          tempCtx.beginPath();
-          tempCtx.arc(lx + lWidth / 2, ly + lHeight / 2, Math.min(lWidth, lHeight) / 2, 0, Math.PI * 2);
-          tempCtx.closePath();
-          tempCtx.clip();
-        } else if (item.frame === 'oval') {
-          tempCtx.beginPath();
-          tempCtx.ellipse(lx + lWidth / 2, ly + lHeight / 2, lWidth / 2, lHeight / 2, 0, 0, Math.PI * 2);
-          tempCtx.closePath();
-          tempCtx.clip();
-        }
-
-        tempCtx.drawImage(logoImg, lx, ly, lWidth, lHeight);
         tempCtx.restore();
 
+        // แสดงกรอบเลือกวัตถุ
         if (photoIndex === currentPhotoIndex && idx === activeCanvasLogoIndex) {
           tempCtx.strokeStyle = '#2563eb';
           tempCtx.lineWidth = Math.max(2, targetW * 0.003);
