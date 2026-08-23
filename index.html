@@ -3,10 +3,13 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-  <title>Filmmy Watermark Editor</title>
+  <title>Filmmy Watermark & Studio Editor</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+  <!-- Library สำหรับ AI ลบพื้นหลังวัตถุบนเบราว์เซอร์ -->
+  <script src="https://cdn.jsdelivr.net/npm/@imgly/background-removal@1.3.0/dist/imgly-background-removal.js"></script>
+
   <link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;700&family=Kanit:wght@400;600&family=Prompt:wght@400;600&family=Sarabun:wght@400;600&display=swap" rel="stylesheet">
   <script>
     tailwind.config = { darkMode: 'class' }
@@ -18,14 +21,6 @@
       width: 100%;
       height: 100%;
     }
-    @media (min-width: 1024px) {
-      body { font-size: 16px; }
-      h2 { font-size: 20px; }
-      label { font-size: 16px; }
-      button { font-size: 16px; }
-      span { font-size: 16px; }
-      p { font-size: 14px; }
-    }
   </style>
 </head>
 <body class="bg-gray-100 dark:bg-gray-900 text-gray-800 dark:text-gray-100 font-sans min-h-screen pb-10 transition-colors text-sm md:text-base">
@@ -33,7 +28,7 @@
   <!-- Header -->
   <header class="bg-blue-600 dark:bg-gray-800 text-white p-3 md:px-8 lg:py-5 sticky top-0 z-50 shadow-md flex justify-between items-center">
     <div>
-      <h1 class="text-base md:text-xl lg:text-3xl font-bold leading-tight">Filmmy Watermark Editor</h1>
+      <h1 class="text-base md:text-xl lg:text-3xl font-bold leading-tight">Filmmy Watermark & Studio Editor</h1>
       <p class="text-[10px] md:text-xs lg:text-sm text-blue-200 dark:text-gray-400 font-normal">By FilmmyE22NCB</p>
     </div>
     
@@ -48,7 +43,7 @@
     <!-- Section 1: Logo Management -->
     <section class="bg-white dark:bg-gray-800 p-4 md:p-6 rounded-xl shadow transition-colors">
       <h2 class="text-lg md:text-xl font-semibold mb-3 flex items-center justify-between">
-        <span class="lg:text-2xl">1. จัดการคลังโลโก้ (หากไฟล์ละเอียด โปรดรอสักครู่นะคะ) </span>
+        <span class="lg:text-2xl">1. จัดการคลังโลโก้ (หากไฟล์ละเอียด โปรดรอสักครู่นะคะ)</span>
         <label class="text-sm bg-blue-50 dark:bg-blue-900/50 text-blue-600 dark:text-blue-300 font-normal px-3 py-1.5 lg:px-5 lg:py-2 rounded border border-blue-200 dark:border-blue-700 cursor-pointer hover:bg-blue-100 lg:text-base">
           + เพิ่มโลโก้
           <input type="file" id="logoInput" accept="image/*" multiple class="hidden">
@@ -85,12 +80,61 @@
         <div class="space-y-2 lg:space-y-4">
           <div class="relative w-full aspect-square bg-gray-200 dark:bg-gray-900 rounded-xl overflow-hidden flex items-center justify-center border dark:border-gray-700 shadow-inner">
             <canvas id="mainCanvas" class="max-w-full max-h-full"></canvas>
+            <div id="aiLoadingOverlay" class="hidden absolute inset-0 bg-black/70 backdrop-blur-sm flex flex-col items-center justify-center text-white space-y-3 p-4 text-center">
+              <div class="w-10 h-10 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+              <p class="font-bold text-sm lg:text-base">🤖 AI กำลังไดคัทลบพื้นหลังวัตถุ...</p>
+              <p class="text-xs text-gray-300">ประมวลผลในเครื่อง ปลอดภัย รูปไม่หลุดไปไหนค่ะ</p>
+            </div>
           </div>
           <p class="text-xs text-gray-500 dark:text-gray-400 text-center lg:text-sm">ใช้นิ้วหรือเมาส์ลากเพื่อจัดตำแหน่งโลโก้หรือข้อความบนภาพได้เลย</p>
         </div>
 
         <!-- Right Column: Control Panel -->
         <div class="space-y-4 lg:space-y-6 lg:mt-0">
+
+          <!-- AI Studio & Product Background Mode -->
+          <div class="p-3 lg:p-4 bg-purple-50/60 dark:bg-purple-950/30 rounded-xl space-y-3 border border-purple-200 dark:border-purple-900">
+            <div class="flex justify-between items-center">
+              <span class="text-xs font-bold text-purple-900 dark:text-purple-300 lg:text-base">🛍️ โหมดสตูดิโอขายของออนไลน์ (AI Background Removal)</span>
+            </div>
+
+            <button id="aiRemoveBgBtn" onclick="processAIRemoveBg()" class="w-full py-2 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white font-bold rounded-lg shadow text-xs lg:text-sm transition-all flex items-center justify-center gap-1.5">
+              <span>🪄 AI ลบพื้นหลังเน้นวัตถุอัตโนมัติ</span>
+            </button>
+
+            <!-- Product Background Colors -->
+            <div class="space-y-1.5 pt-1">
+              <label class="text-[11px] font-medium text-gray-700 dark:text-gray-300 lg:text-xs">เลือกสีพื้นหลังสตูดิโอ:</label>
+              <div class="grid grid-cols-5 gap-1.5">
+                <button onclick="setStudioBg('transparent')" class="p-1 text-[10px] bg-gray-200 dark:bg-gray-700 rounded border text-center hover:opacity-80">โปร่งใส</button>
+                <button onclick="setStudioBg('#ffffff')" class="p-1 text-[10px] bg-white text-black font-bold rounded border text-center hover:opacity-80">ขาวสตูดิโอ</button>
+                <button onclick="setStudioBg('#f3f4f6')" class="p-1 text-[10px] bg-gray-100 text-gray-800 font-bold rounded border text-center hover:opacity-80">เทาอ่อน</button>
+                <button onclick="setStudioBg('#18181b')" class="p-1 text-[10px] bg-zinc-900 text-white font-bold rounded border text-center hover:opacity-80">ดำหรู</button>
+                <input type="color" id="studioCustomBgPicker" onchange="setStudioBg(this.value)" value="#ffffff" class="w-full h-6 p-0 border rounded cursor-pointer">
+              </div>
+            </div>
+
+            <!-- Object Drop Shadow -->
+            <div class="space-y-2 pt-2 border-t border-purple-200/60 dark:border-purple-900/60">
+              <div class="flex justify-between items-center">
+                <label class="text-xs font-semibold text-gray-700 dark:text-gray-200">ใส่เงาตกกระทบวัตถุ (Drop Shadow)</label>
+                <input type="checkbox" id="enableShadowToggle" onchange="toggleObjectShadow(this.checked)" class="w-4 h-4 text-purple-600 rounded">
+              </div>
+
+              <div id="shadowControlsGroup" class="hidden space-y-2 pt-1">
+                <div class="grid grid-cols-2 gap-2">
+                  <div>
+                    <label class="text-[10px] text-gray-500">ความฟุ้งเงา (Blur)</label>
+                    <input type="range" id="shadowBlurSlider" min="0" max="50" value="20" oninput="renderCanvas()" class="w-full">
+                  </div>
+                  <div>
+                    <label class="text-[10px] text-gray-500">ความเข้มเงา</label>
+                    <input type="range" id="shadowOpacitySlider" min="1" max="100" value="40" oninput="renderCanvas()" class="w-full">
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
           
           <!-- Logo Selection Panel -->
           <div class="p-3 lg:p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg space-y-3">
@@ -108,14 +152,6 @@
             <div class="flex justify-between items-center">
               <span class="text-xs font-bold text-blue-600 dark:text-blue-400 lg:text-base">ปรับแต่งโลโก้ที่เลือก</span>
               <button onclick="removeActiveLogo()" class="text-[10px] lg:text-xs bg-red-500 text-white px-2 py-0.5 lg:px-3 lg:py-1 rounded hover:bg-red-600 transition-colors">ลบโลโก้นี้</button>
-            </div>
-
-            <!-- Background Removal Tools -->
-            <div class="p-2.5 bg-blue-50/60 dark:bg-gray-800/80 rounded-lg flex items-center justify-between border border-blue-100 dark:border-gray-700">
-              <span class="text-xs font-semibold text-gray-700 dark:text-gray-200">เครื่องมือจัดการพื้นหลัง</span>
-              <button onclick="removeBackgroundFromActiveLogo()" class="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-medium rounded-lg shadow flex items-center gap-1 transition-colors">
-                🪄 ลบพื้นหลังอัตโนมัติ
-              </button>
             </div>
 
             <!-- Quick Position Preset -->
@@ -182,73 +218,6 @@
 
           </div>
 
-          <!-- Tiling Watermark Pattern -->
-          <div class="p-3 lg:p-4 bg-blue-50/50 dark:bg-blue-950/30 rounded-lg space-y-3 lg:space-y-4 border border-blue-200 dark:border-blue-900">
-            <div class="flex justify-between items-center">
-              <div>
-                <span class="text-xs font-bold text-blue-900 dark:text-blue-300 lg:text-base">โหมดลายน้ำกระจายเต็มรูป (Tiled Watermark Pattern)</span>
-                <p class="text-[10px] text-gray-500 lg:text-sm">ใส่ข้อความหรือรูปภาพเพื่อปูพรมเต็มรูปภาพ</p>
-              </div>
-              <label class="inline-flex items-center cursor-pointer">
-                <input type="checkbox" id="tilingEnableToggle" class="sr-only peer">
-                <div class="w-9 h-5 lg:w-12 lg:h-7 bg-gray-300 peer-focus:outline-none rounded-full peer dark:bg-gray-600 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] lg:after:top-[4px] lg:after:left-[4px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 lg:after:h-5 lg:after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
-              </label>
-            </div>
-
-            <div id="tilingControlsGroup" class="hidden space-y-3 lg:space-y-4 pt-2 lg:pt-3 border-t border-blue-200 dark:border-blue-900">
-              <div>
-                <label class="text-[11px] font-medium text-gray-700 dark:text-gray-300 lg:text-sm">ประเภทลายน้ำ:</label>
-                <div class="flex gap-4 lg:gap-6 mt-1 lg:mt-1.5 text-xs lg:text-sm">
-                  <label class="inline-flex items-center gap-1.5 cursor-pointer">
-                    <input type="radio" name="tilingType" value="text" checked class="text-blue-600 lg:w-5 lg:h-5 transition-colors">
-                    <span>ข้อความ (Text)</span>
-                  </label>
-                  <label class="inline-flex items-center gap-1.5 cursor-pointer">
-                    <input type="radio" name="tilingType" value="image" class="text-blue-600 lg:w-5 lg:h-5 transition-colors">
-                    <span>รูปภาพ (Image)</span>
-                  </label>
-                </div>
-              </div>
-
-              <div id="tilingTextOptions" class="space-y-2 lg:space-y-3">
-                <input type="text" id="tilingTextInput" value="ใส่ข้อความลายน้ำ" placeholder="พิมพ์ข้อความลายน้ำ" class="w-full p-1.5 text-xs border rounded bg-white dark:bg-gray-800 dark:border-gray-600 lg:p-2 lg:text-sm transition-colors">
-                <div class="grid grid-cols-2 gap-2 lg:gap-3">
-                  <div>
-                    <label class="text-[10px] text-gray-500 lg:text-xs">ขนาดฟอนต์</label>
-                    <input type="range" id="tilingTextSizeSlider" min="10" max="80" value="28" class="w-full mt-1 lg:mt-1.5">
-                  </div>
-                  <div>
-                    <label class="text-[10px] text-gray-500 lg:text-xs">สีข้อความ</label>
-                    <input type="color" id="tilingTextColorPicker" value="#ffffff" class="w-full h-6 p-0 border rounded cursor-pointer lg:h-9 lg:mt-1 transition-colors">
-                  </div>
-                </div>
-              </div>
-
-              <div id="tilingImageOptions" class="hidden space-y-2 lg:space-y-3">
-                <label class="block text-xs bg-white dark:bg-gray-800 p-2 rounded border border-dashed text-center cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 lg:p-3 lg:text-sm transition-colors">
-                  <span class="text-blue-600 dark:text-blue-400 font-medium">+ อัปโหลดภาพลายน้ำ</span>
-                  <input type="file" id="tilingImageInput" accept="image/*" class="hidden">
-                </label>
-                <div id="tilingImagePreview" class="text-[10px] text-gray-500 text-center lg:text-sm">ยังไม่ได้เลือกภาพลายน้ำ</div>
-              </div>
-
-              <div class="grid grid-cols-3 gap-2 pt-1 border-t dark:border-gray-700 lg:gap-3 lg:pt-2">
-                <div>
-                  <label class="text-[10px] text-gray-500 lg:text-xs">ความจาง</label>
-                  <input type="range" id="tilingOpacitySlider" min="5" max="100" value="25" class="w-full mt-1 lg:mt-1.5">
-                </div>
-                <div>
-                  <label class="text-[10px] text-gray-500 lg:text-xs">ระยะห่าง (Gap)</label>
-                  <input type="range" id="tilingGapSlider" min="50" max="300" value="120" class="w-full mt-1 lg:mt-1.5">
-                </div>
-                <div>
-                  <label class="text-[10px] text-gray-500 lg:text-xs">มุมเอียง (Rotate)</label>
-                  <input type="range" id="tilingRotateSlider" min="-45" max="45" value="-20" class="w-full mt-1 lg:mt-1.5">
-                </div>
-              </div>
-            </div>
-          </div>
-
           <!-- Text Customization -->
           <div class="p-3 lg:p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg space-y-3 lg:space-y-4">
             <div class="flex justify-between items-center">
@@ -294,8 +263,8 @@
         <div>
           <label class="text-xs font-medium text-gray-600 dark:text-gray-300 lg:text-sm">ฟอร์แมตไฟล์</label>
           <select id="exportFormat" class="w-full mt-1 p-2 border rounded bg-white dark:bg-gray-700 dark:border-gray-600 lg:p-3 lg:text-sm transition-colors">
-            <option value="image/png">PNG (โปร่งใส / คุณภาพสูงสุด)</option>
             <option value="image/jpeg" selected>JPEG (ปรับขนาดและความละเอียดได้)</option>
+            <option value="image/png">PNG (โปร่งใส / คุณภาพสูงสุด)</option>
           </select>
         </div>
 
@@ -324,7 +293,7 @@
 
       <div class="grid grid-cols-2 gap-4 lg:gap-6 pt-2 lg:pt-3">
         <button id="downloadBtn" class="py-3 lg:py-4 bg-green-600 hover:bg-green-700 text-white font-bold rounded-lg shadow text-xs md:text-sm lg:text-base transition-colors">
-          บันทึกรูปปัจจุบัน
+          บันทึกรูปปัจจุบัน ลงเครื่อง
         </button>
         <button id="downloadZipBtn" class="py-3 lg:py-4 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg shadow text-xs md:text-sm lg:text-base transition-colors">
           📦 โหลดทุกรูปเป็น ZIP
@@ -332,70 +301,9 @@
       </div>
     </section>
 
-    <!-- Footer -->
-    <footer class="mt-8 mb-4 border-t border-gray-200 dark:border-gray-800 pt-6 transition-colors">
-      <div class="max-w-xs mx-auto bg-gradient-to-br from-amber-50/80 via-orange-50/50 to-amber-100/60 dark:from-gray-800 dark:via-gray-800/90 dark:to-gray-800/50 backdrop-blur-md p-4 rounded-xl border border-amber-200/60 dark:border-gray-700 shadow-sm text-center space-y-2.5">
-        
-        <div class="flex items-center justify-center gap-1.5 text-amber-900 dark:text-amber-400 font-bold text-sm lg:text-base">
-          <span class="text-lg">☕</span>
-          <span>เลี้ยงกาแฟผู้พัฒนา</span>
-        </div>
-
-        <p class="text-[11px] lg:text-xs text-gray-600 dark:text-gray-300 font-normal leading-tight">
-          หากมีประโยชน์ สามารถสแกนชำระเงินผ่าน QR Code เพื่อสนับสนุนได้เลยนะคะ
-        </p>
-
-        <div class="pt-1 flex flex-col items-center justify-center">
-          <div class="relative group cursor-pointer bg-white dark:bg-gray-900 p-2 rounded-xl border border-amber-200 dark:border-gray-700 shadow-sm hover:shadow transition-all duration-300 hover:scale-105" onclick="openQrModal()">
-            <div class="w-28 h-28 lg:w-36 lg:h-36 overflow-hidden rounded-lg bg-white flex items-center justify-center border transition-all">
-              <img id="qrImgThumb" src="images/qrcode.png" alt="QR Code" class="w-[120%] h-[120%] max-w-none object-cover object-center" onerror="handleQrError(this)">
-            </div>
-            <div class="absolute inset-0 bg-black/40 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white text-[10px] font-medium backdrop-blur-[1px]">
-              🔍 ขยายใหญ่
-            </div>
-          </div>
-          <span class="text-[10px] text-gray-400 dark:text-gray-500 mt-1">สแกนผ่านแอปธนาคารใดก็ได้</span>
-        </div>
-
-        <div class="pt-1.5 border-t border-amber-200/40 dark:border-gray-700/60 text-[10px] text-gray-500 dark:text-gray-400">
-          ขอบคุณทุกการซัพพอร์ตและกำลังใจค่ะ ❤️
-        </div>
-      </div>
-    </footer>
-
   </main>
 
-  <!-- Modal QR Code -->
-  <div id="qrModal" class="fixed inset-0 bg-black/70 z-[100] hidden flex items-center justify-center p-4 backdrop-blur-sm" onclick="closeQrModal()">
-    <div class="bg-white dark:bg-gray-800 p-6 lg:p-8 rounded-3xl max-w-xs lg:max-w-sm w-full text-center space-y-4 lg:space-y-6 relative shadow-2xl border border-gray-200 dark:border-gray-700" onclick="event.stopPropagation()">
-      <button onclick="closeQrModal()" class="absolute top-3 right-4 lg:top-4 lg:right-5 text-gray-400 hover:text-gray-600 dark:hover:text-white text-xl lg:text-2xl font-bold">×</button>
-      <h3 class="font-bold text-gray-800 dark:text-gray-100 text-sm lg:text-xl">สแกนชำระเงิน / เลี้ยงกาแฟ ☕</h3>
-      <div class="w-60 h-60 lg:w-72 lg:h-72 mx-auto overflow-hidden rounded-xl bg-white border border-gray-100 shadow-inner flex items-center justify-center transition-all">
-        <img id="qrImgLarge" src="images/qrcode.png" alt="QR Code Large" class="w-[125%] h-[125%] max-w-none object-cover object-center translate-y-[-2%]">
-      </div>
-      <button onclick="closeQrModal()" class="w-full py-2 lg:py-3 bg-amber-500 hover:bg-amber-600 text-white rounded-xl text-xs lg:text-base font-bold transition-colors">
-        ปิดหน้าต่าง
-      </button>
-    </div>
-  </div>
-
   <script>
-    function openQrModal() {
-      document.getElementById('qrModal').classList.remove('hidden');
-    }
-
-    function closeQrModal() {
-      document.getElementById('qrModal').classList.add('hidden');
-    }
-
-    function handleQrError(imgEl) {
-      if (!imgEl.dataset.triedFallback) {
-        imgEl.dataset.triedFallback = "true";
-        imgEl.src = "images/qrcode.jpg";
-        document.getElementById('qrImgLarge').src = "images/qrcode.jpg";
-      }
-    }
-
     let storedLogos = [];
     let loadedLogoImgs = [];
     let selectedStorageLogoIndex = -1;
@@ -408,17 +316,9 @@
     let textItems = [];
     let activeTextIndex = -1;
 
-    let tilingState = {
-      enabled: false,
-      type: 'text',
-      text: 'Watermark',
-      textSize: 28,
-      textColor: '#ffffff',
-      img: null,
-      opacity: 0.25,
-      gap: 120,
-      rotate: -20
-    };
+    // AI Studio State
+    let studioBgColor = 'transparent';
+    let isObjectShadowEnabled = false;
 
     const canvas = document.getElementById('mainCanvas');
     const ctx = canvas.getContext('2d');
@@ -514,7 +414,6 @@
     function renderLogoGallery() {
       const gallery = document.getElementById('logoGallery');
       const noLogoText = document.getElementById('noLogoText');
-      
       if (!gallery) return;
 
       if (loadedLogoImgs.length > 0) {
@@ -646,6 +545,46 @@
       });
     }
 
+    // AI Process: ลบพื้นหลังรูปสินค้าด้วย Web AI
+    async function processAIRemoveBg() {
+      if (uploadedPhotos.length === 0 || !uploadedPhotos[currentPhotoIndex]) {
+        alert('กรุณาอัปโหลดรูปภาพก่อนใช้งาน AI ลบพื้นหลัง');
+        return;
+      }
+
+      const overlay = document.getElementById('aiLoadingOverlay');
+      overlay.classList.remove('hidden');
+
+      try {
+        const currentImg = uploadedPhotos[currentPhotoIndex];
+        const imageBlob = await imglyRemoveBackground(currentImg.src);
+        
+        const newImg = new Image();
+        newImg.onload = () => {
+          uploadedPhotos[currentPhotoIndex] = newImg;
+          renderPhotoThumbnails();
+          renderCanvas();
+          overlay.classList.add('hidden');
+        };
+        newImg.src = URL.createObjectURL(imageBlob);
+      } catch (err) {
+        overlay.classList.add('hidden');
+        alert('การลบพื้นหลังล้มเหลว หรืออุปกรณ์ประมวลผลไม่ไหว');
+        console.error(err);
+      }
+    }
+
+    function setStudioBg(color) {
+      studioBgColor = color;
+      renderCanvas();
+    }
+
+    function toggleObjectShadow(enabled) {
+      isObjectShadowEnabled = enabled;
+      document.getElementById('shadowControlsGroup').classList.toggle('hidden', !enabled);
+      renderCanvas();
+    }
+
     document.getElementById('addLogoToCanvasBtn').addEventListener('click', () => {
       if (selectedStorageLogoIndex === -1 || !loadedLogoImgs[selectedStorageLogoIndex]) {
         alert('กรุณาเลือกหรืออัปโหลดโลโก้เข้าคลังก่อน');
@@ -729,130 +668,12 @@
       }
     }
 
-    function removeBackgroundFromActiveLogo() {
-      if (activeCanvasLogoIndex === -1 || !canvasLogos[activeCanvasLogoIndex]) return;
-      const currentItem = canvasLogos[activeCanvasLogoIndex];
-      const originalImg = loadedLogoImgs[currentItem.imgIndex];
-      if (!originalImg) return;
-
-      const procCanvas = document.createElement('canvas');
-      const w = originalImg.naturalWidth || originalImg.width;
-      const h = originalImg.naturalHeight || originalImg.height;
-      procCanvas.width = w;
-      procCanvas.height = h;
-
-      const pCtx = procCanvas.getContext('2d');
-      pCtx.drawImage(originalImg, 0, 0);
-
-      const imgData = pCtx.getImageData(0, 0, w, h);
-      const data = imgData.data;
-
-      const bgR = data[0];
-      const bgG = data[1];
-      const bgB = data[2];
-
-      const tolerance = 45;
-
-      for (let i = 0; i < data.length; i += 4) {
-        const r = data[i];
-        const g = data[i + 1];
-        const b = data[i + 2];
-
-        const distance = Math.sqrt((r - bgR) ** 2 + (g - bgG) ** 2 + (b - bgB) ** 2);
-
-        if (distance < tolerance) {
-          data[i + 3] = 0;
-        }
-      }
-
-      pCtx.putImageData(imgData, 0, 0);
-
-      const newImg = new Image();
-      newImg.onload = () => {
-        loadedLogoImgs[currentItem.imgIndex] = newImg;
-        renderCanvas();
-      };
-      newImg.src = procCanvas.toDataURL('image/png');
-    }
-
     function changeActiveLogoShape(val) {
       if (activeCanvasLogoIndex !== -1 && canvasLogos[activeCanvasLogoIndex]) {
         canvasLogos[activeCanvasLogoIndex].shape = val;
         renderCanvas();
       }
     }
-
-    const tilingEnableToggle = document.getElementById('tilingEnableToggle');
-    const tilingControlsGroup = document.getElementById('tilingControlsGroup');
-    const tilingTextOptions = document.getElementById('tilingTextOptions');
-    const tilingImageOptions = document.getElementById('tilingImageOptions');
-
-    tilingEnableToggle.addEventListener('change', (e) => {
-      tilingState.enabled = e.target.checked;
-      tilingControlsGroup.classList.toggle('hidden', !tilingState.enabled);
-      renderCanvas();
-    });
-
-    document.querySelectorAll('input[name="tilingType"]').forEach(radio => {
-      radio.addEventListener('change', (e) => {
-        tilingState.type = e.target.value;
-        if (tilingState.type === 'text') {
-          tilingTextOptions.classList.remove('hidden');
-          tilingImageOptions.classList.add('hidden');
-        } else {
-          tilingTextOptions.classList.add('hidden');
-          tilingImageOptions.classList.remove('hidden');
-        }
-        renderCanvas();
-      });
-    });
-
-    document.getElementById('tilingTextInput').addEventListener('input', (e) => {
-      tilingState.text = e.target.value;
-      renderCanvas();
-    });
-
-    document.getElementById('tilingTextSizeSlider').addEventListener('input', (e) => {
-      tilingState.textSize = parseInt(e.target.value);
-      renderCanvas();
-    });
-
-    document.getElementById('tilingTextColorPicker').addEventListener('input', (e) => {
-      tilingState.textColor = e.target.value;
-      renderCanvas();
-    });
-
-    document.getElementById('tilingImageInput').addEventListener('change', (e) => {
-      const file = e.target.files[0];
-      if (file) {
-        const reader = new FileReader();
-        reader.onload = (event) => {
-          const img = new Image();
-          img.onload = () => {
-            tilingState.img = img;
-            document.getElementById('tilingImagePreview').innerText = `อัปโหลดเรียบร้อย: ${file.name}`;
-            renderCanvas();
-          };
-          img.src = event.target.result;
-        };
-        reader.readAsDataURL(file);
-      }
-    });
-
-    document.getElementById('tilingOpacitySlider').addEventListener('input', (e) => {
-      tilingState.opacity = e.target.value / 100;
-      renderCanvas();
-    });
-
-    document.getElementById('tilingGapSlider').addEventListener('input', (e) => {
-      tilingState.gap = parseInt(e.target.value);
-      renderCanvas();
-    });
-
-    document.getElementById('tilingRotateSlider').addEventListener('input', (e) => {
-      tilingState.rotate = parseInt(e.target.value);
-      renderCanvas();
-    });
 
     document.getElementById('addTextBtn').addEventListener('click', () => {
       textItems.push({
@@ -971,7 +792,6 @@
       }
     });
 
-    // ปรับความสว่างภาพหลักด้วยการคำนวณ Pixel เสมือนจริง รองรับเบราว์เซอร์มือถือ 100%
     const brightnessSliderEl = document.getElementById('brightnessSlider');
     if (brightnessSliderEl) {
       brightnessSliderEl.addEventListener('input', (e) => {
@@ -1019,10 +839,26 @@
       const targetW = sourceW;
       const targetH = sourceH;
 
-      // วาดรูปต้นฉบับลงบน Canvas ชั่วคราว
-      tempCtx.drawImage(baseImg, sourceX, sourceY, sourceW, sourceH, 0, 0, targetW, targetH);
+      // 1. ระบายสีพื้นหลัง Studio หากเลือกไว้
+      if (studioBgColor !== 'transparent') {
+        tempCtx.fillStyle = studioBgColor;
+        tempCtx.fillRect(0, 0, targetW, targetH);
+      }
 
-      // ประมวลผลปรับความสว่างพิกเซลโดยตรง เพื่อแก้บั๊กมือถือไม่ทำงาน
+      // 2. วาดวัตถุสินค้า พร้อมใส่ Drop Shadow
+      tempCtx.save();
+      if (isObjectShadowEnabled) {
+        const blurVal = parseInt(document.getElementById('shadowBlurSlider').value) * (targetW / 1000);
+        const opacityVal = parseInt(document.getElementById('shadowOpacitySlider').value) / 100;
+        tempCtx.shadowColor = `rgba(0, 0, 0, ${opacityVal})`;
+        tempCtx.shadowBlur = blurVal;
+        tempCtx.shadowOffsetY = blurVal / 2;
+      }
+
+      tempCtx.drawImage(baseImg, sourceX, sourceY, sourceW, sourceH, 0, 0, targetW, targetH);
+      tempCtx.restore();
+
+      // 3. ปรับความสว่างพิกเซล
       if (brightness !== 100) {
         const imgData = tempCtx.getImageData(0, 0, targetW, targetH);
         const data = imgData.data;
@@ -1035,45 +871,7 @@
         tempCtx.putImageData(imgData, 0, 0);
       }
 
-      if (tilingState.enabled) {
-        tempCtx.save();
-        tempCtx.globalAlpha = tilingState.opacity;
-        tempCtx.translate(targetW / 2, targetH / 2);
-        tempCtx.rotate((tilingState.rotate * Math.PI) / 180);
-        tempCtx.translate(-targetW / 2, -targetH / 2);
-
-        if (tilingState.type === 'text' && tilingState.text.trim() !== '') {
-          const fontPx = Math.max(14, Math.round((tilingState.textSize / 1000) * targetW));
-          tempCtx.font = `bold ${fontPx}px 'Kanit', sans-serif`;
-          tempCtx.fillStyle = tilingState.textColor;
-          tempCtx.textAlign = 'center';
-          tempCtx.textBaseline = 'middle';
-
-          const textMetrics = tempCtx.measureText(tilingState.text);
-          const tw = textMetrics.width;
-          const gapX = tw + (tilingState.gap * (targetW / 1000));
-          const gapY = fontPx * 3.5;
-
-          for (let x = -targetW; x < targetW * 2; x += gapX) {
-            for (let y = -targetH; y < targetH * 2; y += gapY) {
-              tempCtx.fillText(tilingState.text, x, y);
-            }
-          }
-        } else if (tilingState.type === 'image' && tilingState.img) {
-          const tScale = 0.15;
-          const tw = targetW * tScale;
-          const th = (tilingState.img.naturalHeight / tilingState.img.naturalWidth) * tw;
-          const gap = (tilingState.gap / 100) * tw;
-
-          for (let x = -targetW; x < targetW * 2; x += tw + gap) {
-            for (let y = -targetH; y < targetH * 2; y += th + gap) {
-              tempCtx.drawImage(tilingState.img, x, y, tw, th);
-            }
-          }
-        }
-        tempCtx.restore();
-      }
-
+      // 4. วาดโลโก้
       canvasLogos.forEach((item, idx) => {
         const logoImg = loadedLogoImgs[item.imgIndex];
         if (!logoImg) return;
@@ -1135,6 +933,7 @@
         }
       });
 
+      // 5. วาดข้อความ
       textItems.forEach((tItem, tIdx) => {
         if (!tItem.text || tItem.text.trim() === '') return;
 
@@ -1276,6 +1075,7 @@
       }, format, quality);
     }
 
+    // ปรับแก้ระบบบันทึกภาพรองรับ Android ดาวน์โหลดเข้าโฟลเดอร์ Downloads โดยตรง 100%
     document.getElementById('downloadBtn').addEventListener('click', async () => {
       if (uploadedPhotos.length === 0) {
         alert('กรุณาอัปโหลดรูปภาพก่อนส่งออก');
@@ -1291,29 +1091,21 @@
       targetCanvas.toBlob(async (blob) => {
         if (!blob) return;
 
-        const fileName = `watermark_photo_${Date.now()}.${ext}`;
-        const file = new File([blob], fileName, { type: format });
+        const fileName = `product_photo_${Date.now()}.${ext}`;
 
-        if (navigator.canShare && navigator.canShare({ files: [file] })) {
-          try {
-            await navigator.share({
-              files: [file],
-              title: 'บันทึกรูปภาพ'
-            });
-            return;
-          } catch (err) {
-            if (err.name === 'AbortError') return;
-          }
+        // ใช้ FileSaver หรือสร้าง Anchor Direct Download ให้ Android ดาวน์โหลดรูปทันที
+        if (window.saveAs) {
+          saveAs(blob, fileName);
+        } else {
+          const link = document.createElement('a');
+          const blobUrl = URL.createObjectURL(blob);
+          link.href = blobUrl;
+          link.download = fileName;
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+          setTimeout(() => URL.revokeObjectURL(blobUrl), 10000);
         }
-
-        const link = document.createElement('a');
-        const blobUrl = URL.createObjectURL(blob);
-        link.href = blobUrl;
-        link.download = fileName;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        setTimeout(() => URL.revokeObjectURL(blobUrl), 10000);
       }, format, quality);
     });
 
@@ -1335,7 +1127,7 @@
         await new Promise((resolve) => {
           finalCanvas.toBlob((blob) => {
             if (blob) {
-              zip.file(`edited_photo_${i + 1}.${ext}`, blob);
+              zip.file(`product_photo_${i + 1}.${ext}`, blob);
             }
             resolve();
           }, format, quality);
@@ -1343,7 +1135,7 @@
       }
 
       const content = await zip.generateAsync({ type: "blob" });
-      saveAs(content, `batch_watermarked_photos_${Date.now()}.zip`);
+      saveAs(content, `batch_product_photos_${Date.now()}.zip`);
     });
 
     loadLogosFromStorage();
