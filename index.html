@@ -7,7 +7,7 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
-  <!-- Library สำหรับ AI ลบพื้นหลังวัตถุบนเบราว์เซอร์ -->
+  <!-- Library AI ลบพื้นหลัง -->
   <script src="https://cdn.jsdelivr.net/npm/@imgly/background-removal@1.3.0/dist/imgly-background-removal.js"></script>
 
   <link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;700&family=Kanit:wght@400;600&family=Prompt:wght@400;600&family=Sarabun:wght@400;600&display=swap" rel="stylesheet">
@@ -16,10 +16,18 @@
   </script>
   <style>
     canvas { touch-action: none; }
+    /* จำกัดขนาดการแสดงผลภาพตัวอย่างให้ขนาดกำลังพอดี ไม่ใหญ่เกินหน้าจอ */
+    .canvas-container {
+      max-height: 60vh;
+      width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
     #mainCanvas {
       object-fit: contain;
-      width: 100%;
-      height: 100%;
+      max-width: 100%;
+      max-height: 60vh;
     }
   </style>
 </head>
@@ -43,7 +51,7 @@
     <!-- Section 1: Logo Management -->
     <section class="bg-white dark:bg-gray-800 p-4 md:p-6 rounded-xl shadow transition-colors">
       <h2 class="text-lg md:text-xl font-semibold mb-3 flex items-center justify-between">
-        <span class="lg:text-2xl">1. จัดการคลังโลโก้ (หากไฟล์ละเอียด โปรดรอสักครู่นะคะ)</span>
+        <span class="lg:text-2xl">1. จัดการคลังโลโก้</span>
         <label class="text-sm bg-blue-50 dark:bg-blue-900/50 text-blue-600 dark:text-blue-300 font-normal px-3 py-1.5 lg:px-5 lg:py-2 rounded border border-blue-200 dark:border-blue-700 cursor-pointer hover:bg-blue-100 lg:text-base">
           + เพิ่มโลโก้
           <input type="file" id="logoInput" accept="image/*" multiple class="hidden">
@@ -76,17 +84,17 @@
 
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-[1fr,400px] gap-6 items-start lg:gap-10">
         
-        <!-- Left Column: Canvas -->
+        <!-- Left Column: Canvas Preview Area (ย่อขนาดภาพพรีวิว) -->
         <div class="space-y-2 lg:space-y-4">
-          <div class="relative w-full aspect-square bg-gray-200 dark:bg-gray-900 rounded-xl overflow-hidden flex items-center justify-center border dark:border-gray-700 shadow-inner">
-            <canvas id="mainCanvas" class="max-w-full max-h-full"></canvas>
-            <div id="aiLoadingOverlay" class="hidden absolute inset-0 bg-black/70 backdrop-blur-sm flex flex-col items-center justify-center text-white space-y-3 p-4 text-center">
-              <div class="w-10 h-10 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
-              <p class="font-bold text-sm lg:text-base">🤖 AI กำลังไดคัทลบพื้นหลังวัตถุ...</p>
-              <p class="text-xs text-gray-300">ประมวลผลในเครื่อง ปลอดภัย รูปไม่หลุดไปไหนค่ะ</p>
+          <div class="canvas-container relative bg-gray-200 dark:bg-gray-900 rounded-xl overflow-hidden border dark:border-gray-700 shadow-inner">
+            <canvas id="mainCanvas"></canvas>
+            <div id="aiLoadingOverlay" class="hidden absolute inset-0 bg-black/75 backdrop-blur-sm flex flex-col items-center justify-center text-white space-y-3 p-4 text-center z-10">
+              <div class="w-10 h-10 border-4 border-purple-500 border-t-transparent rounded-full animate-spin"></div>
+              <p class="font-bold text-sm lg:text-base">🤖 AI กำลังไดคัทลบพื้นหลัง...</p>
+              <p class="text-xs text-gray-300">กำลังย่อและประมวลผลเพื่อป้องกันเครื่องค้างค่ะ</p>
             </div>
           </div>
-          <p class="text-xs text-gray-500 dark:text-gray-400 text-center lg:text-sm">ใช้นิ้วหรือเมาส์ลากเพื่อจัดตำแหน่งโลโก้หรือข้อความบนภาพได้เลย</p>
+          <p class="text-xs text-gray-500 dark:text-gray-400 text-center lg:text-sm">ภาพแสดงผลถูกย่อเพื่อความลื่นไหล (ไฟล์ที่บันทึกจะคมชัดสูงตามต้นฉบับ)</p>
         </div>
 
         <!-- Right Column: Control Panel -->
@@ -95,11 +103,11 @@
           <!-- AI Studio & Product Background Mode -->
           <div class="p-3 lg:p-4 bg-purple-50/60 dark:bg-purple-950/30 rounded-xl space-y-3 border border-purple-200 dark:border-purple-900">
             <div class="flex justify-between items-center">
-              <span class="text-xs font-bold text-purple-900 dark:text-purple-300 lg:text-base">🛍️ โหมดสตูดิโอขายของออนไลน์ (AI Background Removal)</span>
+              <span class="text-xs font-bold text-purple-900 dark:text-purple-300 lg:text-base">🛍️ โหมดสตูดิโอขายของออนไลน์</span>
             </div>
 
-            <button id="aiRemoveBgBtn" onclick="processAIRemoveBg()" class="w-full py-2 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white font-bold rounded-lg shadow text-xs lg:text-sm transition-all flex items-center justify-center gap-1.5">
-              <span>🪄 AI ลบพื้นหลังเน้นวัตถุอัตโนมัติ</span>
+            <button id="aiRemoveBgBtn" onclick="processAIRemoveBg()" class="w-full py-2.5 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white font-bold rounded-lg shadow text-xs lg:text-sm transition-all flex items-center justify-center gap-1.5">
+              <span>🪄 AI ลบพื้นหลังวัตถุ</span>
             </button>
 
             <!-- Product Background Colors -->
@@ -107,9 +115,9 @@
               <label class="text-[11px] font-medium text-gray-700 dark:text-gray-300 lg:text-xs">เลือกสีพื้นหลังสตูดิโอ:</label>
               <div class="grid grid-cols-5 gap-1.5">
                 <button onclick="setStudioBg('transparent')" class="p-1 text-[10px] bg-gray-200 dark:bg-gray-700 rounded border text-center hover:opacity-80">โปร่งใส</button>
-                <button onclick="setStudioBg('#ffffff')" class="p-1 text-[10px] bg-white text-black font-bold rounded border text-center hover:opacity-80">ขาวสตูดิโอ</button>
-                <button onclick="setStudioBg('#f3f4f6')" class="p-1 text-[10px] bg-gray-100 text-gray-800 font-bold rounded border text-center hover:opacity-80">เทาอ่อน</button>
-                <button onclick="setStudioBg('#18181b')" class="p-1 text-[10px] bg-zinc-900 text-white font-bold rounded border text-center hover:opacity-80">ดำหรู</button>
+                <button onclick="setStudioBg('#ffffff')" class="p-1 text-[10px] bg-white text-black font-bold rounded border text-center hover:opacity-80">ขาว</button>
+                <button onclick="setStudioBg('#f3f4f6')" class="p-1 text-[10px] bg-gray-100 text-gray-800 font-bold rounded border text-center hover:opacity-80">เทา</button>
+                <button onclick="setStudioBg('#18181b')" class="p-1 text-[10px] bg-zinc-900 text-white font-bold rounded border text-center hover:opacity-80">ดำ</button>
                 <input type="color" id="studioCustomBgPicker" onchange="setStudioBg(this.value)" value="#ffffff" class="w-full h-6 p-0 border rounded cursor-pointer">
               </div>
             </div>
@@ -124,7 +132,7 @@
               <div id="shadowControlsGroup" class="hidden space-y-2 pt-1">
                 <div class="grid grid-cols-2 gap-2">
                   <div>
-                    <label class="text-[10px] text-gray-500">ความฟุ้งเงา (Blur)</label>
+                    <label class="text-[10px] text-gray-500">ความฟุ้งเงา</label>
                     <input type="range" id="shadowBlurSlider" min="0" max="50" value="20" oninput="renderCanvas()" class="w-full">
                   </div>
                   <div>
@@ -184,8 +192,8 @@
               
               <div class="grid grid-cols-2 gap-2 lg:gap-3">
                 <div>
-                  <label class="text-[10px] text-gray-500 lg:text-xs">รูปทรงการครอบภาพ (Shape/Mask)</label>
-                  <select id="logoShapeSelect" onchange="changeActiveLogoShape(this.value)" class="w-full mt-0.5 p-1.5 text-xs border rounded bg-white dark:bg-gray-700 dark:border-gray-600 lg:text-sm transition-colors focus:outline-none">
+                  <label class="text-[10px] text-gray-500 lg:text-xs">รูปทรงการครอบภาพ</label>
+                  <select id="logoShapeSelect" onchange="changeActiveLogoShape(this.value)" class="w-full mt-0.5 p-1.5 text-xs border rounded bg-white dark:bg-gray-700 dark:border-gray-600 focus:outline-none">
                     <option value="none">ทรงเดิม (Original)</option>
                     <option value="circle">ทรงกลม (Circle)</option>
                     <option value="oval">ทรงวงรี (Oval)</option>
@@ -194,12 +202,12 @@
                   </select>
                 </div>
                 <div>
-                  <label class="text-[10px] text-gray-500 lg:text-xs">ประเภทเส้นขอบ (Stroke Pattern)</label>
-                  <select id="logoStrokeStyleSelect" class="w-full mt-0.5 p-1.5 text-xs border rounded bg-white dark:bg-gray-700 dark:border-gray-600 lg:text-sm transition-colors">
+                  <label class="text-[10px] text-gray-500 lg:text-xs">ประเภทเส้นขอบ</label>
+                  <select id="logoStrokeStyleSelect" class="w-full mt-0.5 p-1.5 text-xs border rounded bg-white dark:bg-gray-700 dark:border-gray-600">
                     <option value="none">ไม่มีเส้นขอบ</option>
                     <option value="solid">เส้นทึบ (Solid)</option>
-                    <option value="dashed">เส้นประ (Dashed Line)</option>
-                    <option value="dotted">ลายไข่ปลา (Dotted Line)</option>
+                    <option value="dashed">เส้นประ (Dashed)</option>
+                    <option value="dotted">ลายไข่ปลา (Dotted)</option>
                   </select>
                 </div>
               </div>
@@ -207,11 +215,11 @@
               <div class="grid grid-cols-2 gap-2 lg:gap-3">
                 <div>
                   <label class="text-[10px] text-gray-500 lg:text-xs">ความหนาเส้นขอบ</label>
-                  <input type="range" id="logoStrokeWidthSlider" min="1" max="20" value="4" class="w-full mt-1 lg:mt-1.5">
+                  <input type="range" id="logoStrokeWidthSlider" min="1" max="20" value="4" class="w-full mt-1">
                 </div>
                 <div>
                   <label class="text-[10px] text-gray-500 lg:text-xs">สีเส้นขอบ</label>
-                  <input type="color" id="logoStrokeColorPicker" value="#ffffff" class="w-full h-6 p-0 border rounded cursor-pointer lg:h-9 lg:mt-1 transition-colors">
+                  <input type="color" id="logoStrokeColorPicker" value="#ffffff" class="w-full h-6 p-0 border rounded cursor-pointer mt-1">
                 </div>
               </div>
             </div>
@@ -222,7 +230,7 @@
           <div class="p-3 lg:p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg space-y-3 lg:space-y-4">
             <div class="flex justify-between items-center">
               <span class="text-sm font-semibold lg:text-base">ข้อความ</span>
-              <button id="addTextBtn" class="text-xs lg:text-sm bg-blue-600 hover:bg-blue-700 text-white px-2 py-1 lg:px-4 lg:py-2 rounded lg:rounded-lg shadow transition-colors">
+              <button id="addTextBtn" class="text-xs lg:text-sm bg-blue-600 hover:bg-blue-700 text-white px-2 py-1 lg:px-4 lg:py-2 rounded shadow transition-colors">
                 + เพิ่มข้อความ
               </button>
             </div>
@@ -241,12 +249,12 @@
             <div>
               <label class="text-xs font-medium text-gray-600 dark:text-gray-300 lg:text-sm">อัตราส่วนภาพ (Crop)</label>
               <div class="grid grid-cols-3 sm:grid-cols-6 gap-1.5 mt-1 lg:gap-2 lg:mt-2">
-                <button onclick="setAspectRatio('original')" class="px-2 py-1 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 text-xs rounded border dark:border-gray-600 transition-colors">Original</button>
-                <button onclick="setAspectRatio(1)" class="px-2 py-1 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 text-xs rounded border dark:border-gray-600 transition-colors">1:1</button>
-                <button onclick="setAspectRatio(4/3)" class="px-2 py-1 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 text-xs rounded border dark:border-gray-600 transition-colors">4:3</button>
-                <button onclick="setAspectRatio(4/5)" class="px-2 py-1 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 text-xs rounded border dark:border-gray-600 transition-colors">4:5</button>
-                <button onclick="setAspectRatio(16/9)" class="px-2 py-1 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 text-xs rounded border dark:border-gray-600 transition-colors">16:9</button>
-                <button onclick="setAspectRatio(9/16)" class="px-2 py-1 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 text-xs rounded border dark:border-gray-600 transition-colors">9:16</button>
+                <button onclick="setAspectRatio('original')" class="px-2 py-1 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 text-xs rounded border dark:border-gray-600">Original</button>
+                <button onclick="setAspectRatio(1)" class="px-2 py-1 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 text-xs rounded border dark:border-gray-600">1:1</button>
+                <button onclick="setAspectRatio(4/3)" class="px-2 py-1 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 text-xs rounded border dark:border-gray-600">4:3</button>
+                <button onclick="setAspectRatio(4/5)" class="px-2 py-1 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 text-xs rounded border dark:border-gray-600">4:5</button>
+                <button onclick="setAspectRatio(16/9)" class="px-2 py-1 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 text-xs rounded border dark:border-gray-600">16:9</button>
+                <button onclick="setAspectRatio(9/16)" class="px-2 py-1 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 text-xs rounded border dark:border-gray-600">9:16</button>
               </div>
             </div>
           </div>
@@ -263,7 +271,7 @@
         <div>
           <label class="text-xs font-medium text-gray-600 dark:text-gray-300 lg:text-sm">ฟอร์แมตไฟล์</label>
           <select id="exportFormat" class="w-full mt-1 p-2 border rounded bg-white dark:bg-gray-700 dark:border-gray-600 lg:p-3 lg:text-sm transition-colors">
-            <option value="image/jpeg" selected>JPEG (ปรับขนาดและความละเอียดได้)</option>
+            <option value="image/jpeg" selected>JPEG (ปรับความละเอียดได้)</option>
             <option value="image/png">PNG (โปร่งใส / คุณภาพสูงสุด)</option>
           </select>
         </div>
@@ -316,7 +324,6 @@
     let textItems = [];
     let activeTextIndex = -1;
 
-    // AI Studio State
     let studioBgColor = 'transparent';
     let isObjectShadowEnabled = false;
 
@@ -545,7 +552,7 @@
       });
     }
 
-    // AI Process: ลบพื้นหลังรูปสินค้าด้วย Web AI
+    // ย่อสเกลภาพให้เหมาะสมก่อนส่งเข้า AI เพื่อไม่ให้เครื่องค้าง/RAM เต็ม
     async function processAIRemoveBg() {
       if (uploadedPhotos.length === 0 || !uploadedPhotos[currentPhotoIndex]) {
         alert('กรุณาอัปโหลดรูปภาพก่อนใช้งาน AI ลบพื้นหลัง');
@@ -555,23 +562,49 @@
       const overlay = document.getElementById('aiLoadingOverlay');
       overlay.classList.remove('hidden');
 
-      try {
-        const currentImg = uploadedPhotos[currentPhotoIndex];
-        const imageBlob = await imglyRemoveBackground(currentImg.src);
-        
-        const newImg = new Image();
-        newImg.onload = () => {
-          uploadedPhotos[currentPhotoIndex] = newImg;
-          renderPhotoThumbnails();
-          renderCanvas();
+      setTimeout(async () => {
+        try {
+          const currentImg = uploadedPhotos[currentPhotoIndex];
+          const origW = currentImg.naturalWidth || currentImg.width;
+          const origH = currentImg.naturalHeight || currentImg.height;
+
+          // ย่อขนาดส่งให้ AI ประมวลผลลื่นๆ (สูงสุดไม่เกิน 1024px)
+          const maxAiDim = 1024;
+          let processW = origW;
+          let processH = origH;
+          if (origW > maxAiDim || origH > maxAiDim) {
+            if (origW > origH) {
+              processH = Math.round((origH * maxAiDim) / origW);
+              processW = maxAiDim;
+            } else {
+              processW = Math.round((origW * maxAiDim) / origH);
+              processH = maxAiDim;
+            }
+          }
+
+          const resizeCanvas = document.createElement('canvas');
+          resizeCanvas.width = processW;
+          resizeCanvas.height = processH;
+          const rCtx = resizeCanvas.getContext('2d');
+          rCtx.drawImage(currentImg, 0, 0, processW, processH);
+
+          const resizedBlob = await new Promise(res => resizeCanvas.toBlob(res, 'image/png'));
+          const imageBlob = await imglyRemoveBackground(resizedBlob);
+          
+          const newImg = new Image();
+          newImg.onload = () => {
+            uploadedPhotos[currentPhotoIndex] = newImg;
+            renderPhotoThumbnails();
+            renderCanvas();
+            overlay.classList.add('hidden');
+          };
+          newImg.src = URL.createObjectURL(imageBlob);
+        } catch (err) {
           overlay.classList.add('hidden');
-        };
-        newImg.src = URL.createObjectURL(imageBlob);
-      } catch (err) {
-        overlay.classList.add('hidden');
-        alert('การลบพื้นหลังล้มเหลว หรืออุปกรณ์ประมวลผลไม่ไหว');
-        console.error(err);
-      }
+          alert('ไม่สามารถลบพื้นหลังได้ กรุณาลองใช้อีกครั้งหรือเปลี่ยนรูปภาพ');
+          console.error(err);
+        }
+      }, 100);
     }
 
     function setStudioBg(color) {
@@ -711,18 +744,18 @@
         itemBox.innerHTML = `
           <div class="flex justify-between items-center">
             <span class="font-bold text-gray-700 dark:text-gray-200">ข้อความ #${idx + 1}</span>
-            <button onclick="removeTextItem(${idx})" class="text-[10px] bg-red-500 text-white px-2 py-0.5 rounded transition-colors">ลบ</button>
+            <button onclick="removeTextItem(${idx})" class="text-[10px] bg-red-500 text-white px-2 py-0.5 rounded shadow">ลบ</button>
           </div>
-          <input type="text" id="textInput_${idx}" value="${item.text}" placeholder="พิมพ์ข้อความที่นี่..." class="w-full p-1.5 text-xs border rounded bg-white dark:bg-gray-800 dark:border-gray-600 transition-colors">
+          <input type="text" id="textInput_${idx}" value="${item.text}" placeholder="พิมพ์ข้อความที่นี่..." class="w-full p-1.5 text-xs border rounded bg-white dark:bg-gray-800 dark:border-gray-600">
           <div class="grid grid-cols-3 gap-1">
-            <select onchange="updateTextProp(${idx}, 'font', this.value)" class="p-1 text-[11px] border rounded bg-white dark:bg-gray-800 transition-colors">
+            <select onchange="updateTextProp(${idx}, 'font', this.value)" class="p-1 text-[11px] border rounded bg-white dark:bg-gray-800">
               <option value="Kanit" ${item.font==='Kanit'?'selected':''}>Kanit</option>
               <option value="Prompt" ${item.font==='Prompt'?'selected':''}>Prompt</option>
               <option value="Chakra Petch" ${item.font==='Chakra Petch'?'selected':''}>Chakra Petch</option>
               <option value="Sarabun" ${item.font==='Sarabun'?'selected':''}>Sarabun</option>
             </select>
             <input type="range" min="10" max="100" value="${item.size}" oninput="updateTextProp(${idx}, 'size', parseInt(this.value))" class="w-full mt-1">
-            <input type="color" value="${item.color}" oninput="updateTextProp(${idx}, 'color', this.value)" class="w-full h-6 p-0 border rounded cursor-pointer transition-colors">
+            <input type="color" value="${item.color}" oninput="updateTextProp(${idx}, 'color', this.value)" class="w-full h-6 p-0 border rounded cursor-pointer">
           </div>
         `;
         container.appendChild(itemBox);
@@ -839,13 +872,13 @@
       const targetW = sourceW;
       const targetH = sourceH;
 
-      // 1. ระบายสีพื้นหลัง Studio หากเลือกไว้
+      // 1. ระบายสีพื้นหลัง Studio
       if (studioBgColor !== 'transparent') {
         tempCtx.fillStyle = studioBgColor;
         tempCtx.fillRect(0, 0, targetW, targetH);
       }
 
-      // 2. วาดวัตถุสินค้า พร้อมใส่ Drop Shadow
+      // 2. วาดภาพหลัก
       tempCtx.save();
       if (isObjectShadowEnabled) {
         const blurVal = parseInt(document.getElementById('shadowBlurSlider').value) * (targetW / 1000);
@@ -970,6 +1003,7 @@
     function renderCanvas() {
       const rendered = renderCanvasForImage(currentPhotoIndex, false);
       if (!rendered) return;
+
       canvas.width = rendered.width;
       canvas.height = rendered.height;
       ctx.drawImage(rendered, 0, 0);
@@ -1075,7 +1109,6 @@
       }, format, quality);
     }
 
-    // ปรับแก้ระบบบันทึกภาพรองรับ Android ดาวน์โหลดเข้าโฟลเดอร์ Downloads โดยตรง 100%
     document.getElementById('downloadBtn').addEventListener('click', async () => {
       if (uploadedPhotos.length === 0) {
         alert('กรุณาอัปโหลดรูปภาพก่อนส่งออก');
@@ -1093,7 +1126,6 @@
 
         const fileName = `product_photo_${Date.now()}.${ext}`;
 
-        // ใช้ FileSaver หรือสร้าง Anchor Direct Download ให้ Android ดาวน์โหลดรูปทันที
         if (window.saveAs) {
           saveAs(blob, fileName);
         } else {
